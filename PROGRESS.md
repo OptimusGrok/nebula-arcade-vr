@@ -57,3 +57,11 @@
   (deletes only galactic-arcade_vr-* caches, unregisters, navigates its windows here). As a belt-and-braces step this build's delayed SW path
   also unregisters the worker whose scope is exactly /galactic-arcade-vr/ and deletes galactic-arcade_vr-* caches (nothing else).
 - Tests: test/start.js now expects the title 'Nebula Arcade'; test/sw_reload.js + test/acc_reload.js use nebula-arcade_vr-v29.
+- Live checks (Nov 20 2026, 480x270, under the browser-test lock, scripts in /workspace/vr-rename-live): both new links load + render with
+  title Nebula Arcade, no visible "Galactic Arcade", no console errors, own SW registers (own scope only) and fills its own cache
+  (nebula-arcade_vr-v29 / nebula-arcade_vrtest-v26). ?debug=1 shows the DEBUG overlay on the test link; on main there is no overlay and
+  /nebula-arcade-vr/debug.js 404s. Old links: a fresh visit to /galactic-arcade-vr/?debug=1&x=2#hh and /galactic-arcade-vr-test/?... lands on
+  the matching new link with query + hash; each old sw.js activates, deletes only its own galactic-arcade_vr-* / galactic-arcade_vrtest-*
+  caches (normal game + other link caches untouched), unregisters itself and navigates open windows to the new link. Old repos: main 77cc3b6,
+  test 35d607c. No "Monkey Mayhem VR" cabinet/listing in either VR repo, so no Primate Chaos change was needed.
+- Quest: remove the old Galactic Arcade app and add Nebula Arcade from the new link (saves/tickets/settings carry over, same origin).
