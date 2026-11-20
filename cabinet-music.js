@@ -1,4 +1,4 @@
-// Galactic Arcade - cabinet music (drop-in kit; built by the Chief for Arcade to wire in).
+// Nebula Arcade - cabinet music (drop-in kit; built by the Chief for Arcade to wire in).
 // ONE player for both cases, so demo music and proximity music can never double up:
 //   * walk mode: the nearest cabinet within RADIUS of the monkey plays its loop; the room track ducks (via __cabMusic.duck)
 //   * cabinet DEMO view (play.mode 'game', sub 'demo'): that cabinet's loop plays (the game copies' demos are silent)

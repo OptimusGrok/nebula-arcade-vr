@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Galactic Arcade VR: put <script src="../vr-frame-shim.js"></script> first in every cabinet game page.
+"""Nebula Arcade VR: put <script src="../vr-frame-shim.js"></script> first in every cabinet game page.
 Idempotent; re-run after rebuilding any *-play / *-demo copy with the tools_build_*.py scripts."""
 import glob, os, re, sys
 ROOT = os.path.dirname(os.path.abspath(__file__))

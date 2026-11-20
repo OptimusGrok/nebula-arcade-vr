@@ -1,4 +1,4 @@
-// ===== GALACTIC ARCADE: GALACTIC GOLF copy hooks (loaded by golf-play/index.html, written by tools_build_golf_play.py; the original is never edited) =====
+// ===== NEBULA ARCADE: GALACTIC GOLF copy hooks (loaded by golf-play/index.html, written by tools_build_golf_play.py; the original is never edited) =====
 // First 3 holes only. Every finished hole reports its stroke count to the arcade (window.parent.__golfArcadePay), which pays
 // 1 stroke = 5 tickets, 2 = 4, 3 = 3, more = 0. The arcade charges 5 tickets at the shield on the stairs for every visit.
 (function () {

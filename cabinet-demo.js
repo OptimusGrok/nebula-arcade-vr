@@ -1,4 +1,4 @@
-// Galactic Arcade - neat cabinet DEMO overlay (drop-in kit; built by the Chief for Arcade to wire in).
+// Nebula Arcade - neat cabinet DEMO overlay (drop-in kit; built by the Chief for Arcade to wire in).
 // It restyles Arcade's existing #demoUI in place: the same element ids (#dTag #dInsert #dCredit #dCost #bTicket #bExit) stay,
 // so play.js keeps its click handlers and tests. Layout: score+BEST (drawn by the game) top-left, X under it, DEMO pill top-centre,
 // ONE ticket counter top-right (#cdTix; #tix / #vix are hidden while the demo shows), one gold panel at the bottom.

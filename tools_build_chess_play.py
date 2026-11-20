@@ -1,4 +1,4 @@
-# Builds chess-play/index.html: the playable CHESS for the Galactic Arcade VR chess table (Grok's shop, between the ACCESSORIES
+# Builds chess-play/index.html: the playable CHESS for the Nebula Arcade VR chess table (Grok's shop, between the ACCESSORIES
 # wardrobe and the pool tables). Source: /workspace/chess/src (live https://optimusgrok.github.io/chess/, repo OptimusGrok/chess),
 # READ ONLY: the inlining is done here in memory (same as its build.sh), nothing is written into the chess folder and the original
 # never gets tickets. Arcade copy only: own storage keys (arcade_chess.*), tickets for a win vs the Computer + the VR painter

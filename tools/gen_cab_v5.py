@@ -1,4 +1,4 @@
-# Cabinet music loops for Galactic Arcade (numpy synthesis, same style as galactic-shop/music/gen.py).
+# Cabinet music loops for Nebula Arcade (numpy synthesis, same style as galactic-shop/music/gen.py).
 # Each loop is an exact whole number of bars; note tails wrap to the start, so the loop is seamless.
 # Output: <key>.mp3 (mono, 48 kbps, 22.05 kHz) + manifest.json with exact loop sample counts.
 import numpy as np, scipy.io.wavfile as w, subprocess, json, os

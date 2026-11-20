@@ -1,4 +1,4 @@
-// GALACTIC ARCADE PRIZE SHOP (white teleporter room). Self-contained: setupShop({ scene, tp, play, monkey, camera, st })
+// NEBULA ARCADE PRIZE SHOP (white teleporter room). Self-contained: setupShop({ scene, tp, play, monkey, camera, st })
 // Enlarges the white room (24 -> 28 m), adds a white-glass prize wall (Grok plush + monkey plushes on top, cheap toys below,
 // one "NAME · N TICKETS" label under every item), a candy stand, a checkout counter with a life-size Grok robot, anime wall art
 // (one atlas, one draw call). Near Grok a SHOP button appears -> Grok greets you (recorded clip sfx/grok_hi.mp3, no bubble) and a holographic
@@ -347,7 +347,7 @@ export function setupShop({ scene, tp, play, monkey, camera, st } = {}) {
   add([new THREE.PlaneGeometry(2 * xE, MT - TB).translate(0, (TB + MT) / 2, zm)], mat('shop_mural_top.jpg'), 'muralTop');                                       // above the prize shelves
   add([new THREE.PlaneGeometry(ZF - ZW, MHh).rotateY(Math.PI / 2).translate(-HS + 0.012, MB + MHh / 2, (ZW + ZF) / 2)], mat('shop_mural_side.jpg'), 'muralSide');    // left wall
   add([new THREE.PlaneGeometry(ZF - ZW, MHh).rotateY(-Math.PI / 2).translate(HS - 0.012, MB + MHh / 2, (ZW + ZF) / 2)], mat('shop_mural_side2.jpg'), 'muralSide2'); // right wall
-  add([new THREE.PlaneGeometry(2 * HS, MHh).rotateY(Math.PI).translate(0, MB + MHh / 2, ZF - 0.012)], mat('shop_title_wall.jpg'), 'muralTitle');   // title wall (behind the pad): GALACTIC ARCADE + the game characters
+  add([new THREE.PlaneGeometry(2 * HS, MHh).rotateY(Math.PI).translate(0, MB + MHh / 2, ZF - 0.012)], mat('shop_title_wall.jpg'), 'muralTitle');   // title wall (behind the pad): NEBULA ARCADE + the game characters
 
   // ---------- PRIZE WALL: 4 bays x 5 white-lacquer shelves, lit back panels, chrome edges, warm LED under every shelf, spotlights on top ----------
   const SD = 0.55, Z0 = ZW + SD / 2 + 0.02, SY = [0.42, 1.2, 1.98, 2.76, 3.54], TOP = 5.0, BAYS = 4, BW = SW / BAYS;
@@ -871,7 +871,7 @@ export function setupShop({ scene, tp, play, monkey, camera, st } = {}) {
   let poolMsgT = 0; const poolNeed = (b, el = poolBtn) => { poolApi.need++; poolMsg.textContent = 'NEED ' + POOL_COST + ' TICKETS · YOU HAVE ' + b; poolMsg.style.display = 'block'; clearTimeout(poolMsgT); poolMsgT = setTimeout(() => { poolMsg.style.display = 'none'; }, 2200);
     el.animate([{ transform: 'translateX(-50%) translateX(-8px)' }, { transform: 'translateX(-50%) translateX(8px)' }, { transform: 'translateX(-50%)' }], 240); };
   poolBtn.textContent = '🎱 PLAY POOL · 🎟 ' + POOL_COST; const poolBtn2 = poolBtn.cloneNode(true); poolBtn2.id = 'poolBtn2'; document.body.appendChild(poolBtn2); const poolBtns = [poolBtn, poolBtn2]; poolApi.cost = POOL_COST; poolApi.need = 0; poolApi.paid = 0;
-  function openPool(i = poolApi.which) { if (poolApi.open) return; const b = balance(); if (b < POOL_COST || !spend(POOL_COST)) { poolNeed(b, poolBtns[i] || poolBtn); return; } try { window.__announce && window.__announce('buy', { item: 'Pool', cost: POOL_COST }); } catch (e) {}  poolApi.table = i; poolApi.rewarded = false; poolApi.games++;   // 5 Galactic Arcade tickets per game (Dave), same pot as the cabinets
+  function openPool(i = poolApi.which) { if (poolApi.open) return; const b = balance(); if (b < POOL_COST || !spend(POOL_COST)) { poolNeed(b, poolBtns[i] || poolBtn); return; } try { window.__announce && window.__announce('buy', { item: 'Pool', cost: POOL_COST }); } catch (e) {}  poolApi.table = i; poolApi.rewarded = false; poolApi.games++;   // 5 Nebula Arcade tickets per game (Dave), same pot as the cabinets
     poolApi.paid += POOL_COST; poolMsg.style.display = 'none'; try { const P = play || (window.__arcade && window.__arcade.play); if (P && P.tickets && P.tickets.save) P.tickets.save(); } catch (e) {}
     poolApi.open = true; poolApi.opens++; for (const b of poolBtns) b.classList.remove('on'); clearKeys(); if (api.open) closeShop();
     const f = poolApi.frame = document.createElement('iframe'); f.src = POOL_SRC; f.title = '8-Ball Pool'; f.allow = 'autoplay; fullscreen'; poolOv.appendChild(f); poolOv.classList.add('on');

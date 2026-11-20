@@ -113,7 +113,7 @@ const KB = [
   { id: 'colour', k: ['favourite colour', 'favorite color', 'colour', 'color'],
     a: 'Neon cyan, obviously! It matches the arcade.' },
   { id: 'dave', k: ['dave', 'who made', 'who built', 'creator', 'made this', 'made the arcade'],
-    a: 'Galactic Arcade was built by Dave and his team of helper bots. Every machine in here was made with love!' },
+    a: 'Nebula Arcade was built by Dave and his team of helper bots. Every machine in here was made with love!' },
   { id: 'weather', k: ['weather', 'raining', 'sunny', 'hot', 'cold'],
     a: 'Inside the arcade it\'s always a perfect 22 degrees with a 100% chance of fun! Check a weather app for outside.' },
   { id: 'help', k: ['help', 'what can you do', 'what can i ask', 'commands', 'stuck', 'lost'],

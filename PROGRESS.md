@@ -39,3 +39,21 @@
   CYBERPUNK ROOFTOP, nk/rooftop.js, galacticarcade.nkScenery, ?norooftop=1) via the SCENERY orb, the Y menu in Neon Knockout and the flat button;
   NK menu orbs pointable (TRIGGER or A); footprint outline at the stand spot (?nofeet=1). nk/rooftop.js precached. Details: vrtest-v20 notes in the test repo.
 - test/nk_scenery_v20.js + test/vr_start_play.js pass on this build. Emulator: studio 358 draw calls / rooftop 272; worst switch frame 34 ms (median 16.6).
+
+## VR v29: renamed to NEBULA ARCADE, new link https://optimusgrok.github.io/nebula-arcade-vr/ (Dave via Chief, sw nebula-arcade_vr-v29)
+- Why: Meta Horizon Worlds already uses the name Galactic Arcade. The normal game moves to /nebula-arcade/ (Chief, v260).
+- Content = main v28 (galactic-arcade-vr bd30e89) exactly (none of the vrtest-v22..v25 features), plus only the rename:
+  title / apple title / start aria-label + alt / landscape hint (index.html), manifest name + short_name, the start overlay logo
+  (player.js: NEBULA / ARCADE), Grok's 'who built this' answer (grokchat.js), the ticket art text NEBULA ARCADE (ticket-art.js,
+  tools_ticket_art.js and every *-play page), the rooftop neon sign 'NEBULA' (nk/rooftop.js), the start picture img/start.webp/.jpg
+  and the shop title wall tex/shop_title_wall.jpg (+ tex/ktx2/shop_title_wall.ktx2 rebuilt with the same toktx settings as
+  tools/build_ktx2.py), and the PA welcome voice audio/pa_welcome.m4a/.ogg ("Welcome to Nebula Arcade. ...", same voice cloned from the
+  old clip, same loudness -17.5 LUFS). The app icon has no text (unchanged). Comments saying Galactic Arcade were renamed too.
+- Kept on purpose (same origin, so everything carries over): localStorage keys galacticarcade.* / neonarcade.*, the
+  galactic-arcade-public multiplayer channel, Supabase tables / RPCs / rooms, internal identifiers (__gaVR, ga* names). 'Galactic Golf' is
+  a game name, unchanged.
+- Cache family is now nebula-arcade_vr-* (underscore, so the normal game's nebula-arcade-v* cleanup never matches it); ?v=29 on every tag.
+- Old link https://optimusgrok.github.io/galactic-arcade-vr/ is now a redirect page (query + hash kept) with a self-destructing sw.js
+  (deletes only galactic-arcade_vr-* caches, unregisters, navigates its windows here). As a belt-and-braces step this build's delayed SW path
+  also unregisters the worker whose scope is exactly /galactic-arcade-vr/ and deletes galactic-arcade_vr-* caches (nothing else).
+- Tests: test/start.js now expects the title 'Nebula Arcade'; test/sw_reload.js + test/acc_reload.js use nebula-arcade_vr-v29.

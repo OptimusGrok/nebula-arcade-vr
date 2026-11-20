@@ -1,4 +1,4 @@
-/* Galactic Arcade - neat cabinet DEMO overlay (cabinet-demo.js). Active only while body.cd-demo is set. */
+/* Nebula Arcade - neat cabinet DEMO overlay (cabinet-demo.js). Active only while body.cd-demo is set. */
 body.cd-demo #tix, body.cd-demo #vix { display: none !important; }            /* ONE ticket counter: #cdTix */
 #demoUI.cd { justify-content: flex-end; gap: 0; padding-bottom: max(3vh, calc(env(safe-area-inset-bottom) + 14px)); }
 #demoUI.cd #dTag { top: max(12px, env(safe-area-inset-top)); font: 700 12px 'Courier New', monospace; letter-spacing: .3em; color: var(--cd-pill, #7fe8ff);

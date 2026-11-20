@@ -1,4 +1,4 @@
-// Galactic Arcade VR: loaded first inside every cabinet game iframe (same origin).
+// Nebula Arcade VR: loaded first inside every cabinet game iframe (same origin).
 // While the parent page is in an immersive WebXR session, a headset browser may pause window.requestAnimationFrame
 // for the page and its iframes. This wraps the iframe's requestAnimationFrame so the parent's XR frame loop can run
 // the game's frame callbacks itself (window.__gaVRPump), in the same task that then copies the game canvas into a

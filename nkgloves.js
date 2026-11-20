@@ -1,4 +1,4 @@
-// NEON KNOCKOUT glove skins (v16): bought with Galactic Arcade tickets in the shop (shop.js), worn in the arcade's Neon Knockout
+// NEON KNOCKOUT glove skins (v16): bought with Nebula Arcade tickets in the shop (shop.js), worn in the arcade's Neon Knockout
 // studio (nk/nkgame.js). Arcade copy only. localStorage 'gaNK.gloves' = { owned: [...], on: 'classic' }.
 export const NK_GLOVES = [
   { id: 'gold', name: 'Gold Gloves', price: 150 },

@@ -1,4 +1,4 @@
-// NEON KNOCKOUT · Galactic Arcade VR copy (v16, t399u). A port of Side Scroller Platform's VR fitness boxing game
+// NEON KNOCKOUT · Nebula Arcade VR copy (v16, t399u). A port of Side Scroller Platform's VR fitness boxing game
 // (OptimusGrok/neon-knockout 8c203ad, /workspace/vr-boxing/src/main.js) into the arcade's own three.js scene + XR session:
 // the studio is built under `root` (placed far west of the arcade), the arcade's controllers are the gloves, ducking reads the
 // headset height. Lazy loaded on the first beam to the studio. Arcade-only extras: difficulty (EASY / NORMAL / BEAST), a daily
@@ -6,7 +6,7 @@
 // uses different localStorage keys (neonko.*); this copy uses gaNK.*.
 import * as THREE from 'three';
 import { gloveSkin, gloveState, ownsGlove, wearGlove, gloveIds } from '../nkgloves.js';
-import { buildRooftop } from './rooftop.js?v=28';
+import { buildRooftop } from './rooftop.js?v=29';
 
 export const NK_DIFF = {
   easy: { label: 'EASY', bpm: 110, travel: 2.5, duck: 8, mix: 0.6, mult: 0.6 },

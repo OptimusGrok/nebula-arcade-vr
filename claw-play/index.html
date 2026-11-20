@@ -324,7 +324,7 @@ let last=performance.now(),T0=0;
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;T0+=dt;update(dt);
   g.fillStyle='#140a2a';g.fillRect(0,0,W,H);drawScene(T0);drawMarquee(T0);drawControls(T0);drawHUD();drawShelf();requestAnimationFrame(frame);}
 resize();setCam();setupBalls();for(const k of['bear','bunny','duck','frog','cat','octopus','penguin','alien'])newToy(true,k);requestAnimationFrame(frame);
-// CLAW MACHINE (arcade copy only, injected inside the game's own scope). 1 Galactic Arcade ticket = 1 credit = ONE drop. The copy starts with
+// CLAW MACHINE (arcade copy only, injected inside the game's own scope). 1 Nebula Arcade ticket = 1 credit = ONE drop. The copy starts with
 // 0 credits (the original's 50 free local credits are gone); the arcade inserts the credit with __clawA.start(). After that drop has fully
 // resolved (claw home, no prize still falling) the scene reports 'over' and the arcade returns to its demo. Prizes behave exactly like the
 // original (plush goes to the shelf + the PRIZES collection, kept in the arcade copy's own key arcade_clawMachine.collection); the original

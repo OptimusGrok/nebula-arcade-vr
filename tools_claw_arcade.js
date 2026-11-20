@@ -1,4 +1,4 @@
-// CLAW MACHINE (arcade copy only, injected inside the game's own scope). 1 Galactic Arcade ticket = 1 credit = ONE drop. The copy starts with
+// CLAW MACHINE (arcade copy only, injected inside the game's own scope). 1 Nebula Arcade ticket = 1 credit = ONE drop. The copy starts with
 // 0 credits (the original's 50 free local credits are gone); the arcade inserts the credit with __clawA.start(). After that drop has fully
 // resolved (claw home, no prize still falling) the scene reports 'over' and the arcade returns to its demo. Prizes behave exactly like the
 // original (plush goes to the shelf + the PRIZES collection, kept in the arcade copy's own key arcade_clawMachine.collection); the original

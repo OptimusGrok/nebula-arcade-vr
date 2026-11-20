@@ -1,4 +1,4 @@
-// Galactic Arcade (formerly Neon Arcade) — walkable 3D arcade room with a playable monkey.
+// Nebula Arcade (formerly Neon Arcade) — walkable 3D arcade room with a playable monkey.
 import { setupGrid } from './grid.js';
 import * as THREE from 'three';
 import { Reflector } from 'three/addons/objects/Reflector.js';
@@ -36,7 +36,7 @@ import { setupOpts } from './opts.js';
 import { setupTeleport, WX, NKX, NK_PAD } from './teleport.js';
 import { lavaPaths, PATH_HW } from './lavapaths.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { setupVR } from './vr.js';   // Galactic Arcade VR: WebXR (Meta Quest Browser)
+import { setupVR } from './vr.js';   // Nebula Arcade VR: WebXR (Meta Quest Browser)
 import { detectTier, probeGPU, qualityForTier, persistTier, installContextLossHandler, memSnapshot, ensureLostOverlay, isSoftwareGL, capLoadedTexture, cabWH, flagTex, finishCanvasTex, tierQuality, setStreamThree } from './tier.js';
 setStreamThree(THREE);   // TEST v1: stream placeholders
 
@@ -2245,7 +2245,7 @@ schedule();
 
 // hooks for tests / future art work
 window.__arcade = { get zoomHoldState() { return { on: zoomHold.on, lock: zoomHold.lock, k: zoomHold.k }; }, powerSave: PS, tier: TIER, mem: () => memSnapshot({ THREE, renderer, scene, composer, extras: { tier: TIER.name, why: TIER.why, gpu: TIER.gpu, post: !!usePost, cabDemos: !!Q.cabDemos, gapAvg: stats.gapAvg, cpuAvg: stats.cpuAvg } }), setTier: name => { if (name !== 'low' && name !== 'mid' && name !== 'high') return TIER; TIER.name = name; TIER.forced = true; persistTier(name); applyQuality(); return TIER; }, animateMonkey: dt => animateMonkey(dt), get window() { return windowMode; }, setWindow, get jumping() { return !!st.jump; }, canJump, LAVA, lavaRespawnPoint, get spaceWin() { return spaceWin; }, get kiosk() { return kiosk; }, setFloor, get floor() { return floorMode; }, floorMats, setWalls, get walls() { return wallsMode; }, wallMat, carpet, mirror, shield, room, room2, Z2, hall, DOOR_W, DOOR_H, HALL_L, berserkerCab, monkeyCab, orcCab, cyberCab, novaCab, blasterCab, pipCab, clawCab, bbCab, rockfallCab, skyTowerCab, roadsterCab, dsCab, play, get paused() { return paused; }, simPause: arcadePause, flyCfg: FLY, jetpackOn: jetpackEquipped, wantWide, joyFrom, joyClear, setDist, loadZoom, saveZoom, defaultDist, zoomHold, tickZoom, zoom: { key: ZOOM_KEY, min: DIST_MIN, max: DIST_MAX, wide: DIST_WIDE, portrait: DIST_PORTRAIT, holdT: ZOOM_HOLD_T }, THREE, scene, camera, renderer, monkey, makeMonkey, makeAlien, setChar: setPlayerChar, tickBot, cabinets, strikeCab, ghostCab, featured, demo, ghostDemo, playables, blockers, st, stats, step, keys, get nearCab() { return nearCab; }, get neonBricks() { return nb; }, nbFade: dt => nbFade(dt), get playerFade() { return PF.k; }, get pfClones() { return PF.clones; }, nbWarm: () => nbWarm(), get randomRoom() { return window.__randomRoom; }, setArt: (i, part, tex, glow) => cabinets[i].userData.setArt(part, tex, glow), stream: STREAM };
-// ---------- Galactic Arcade VR (vr.js): ENTER VR, head tracking, thumbstick / teleport movement, cabinet games on an in-world screen ----------
+// ---------- Nebula Arcade VR (vr.js): ENTER VR, head tracking, thumbstick / teleport movement, cabinet games on an in-world screen ----------
 VRH = setupVR({ THREE, renderer, scene, camera, monkey, st, play, keys, playables, collide, frame, TIER, QUEST,
   resumeFlat() { rafOn = true; last = performance.now(); schedule(); resize(true); },
   get shop() { return shop; }, get tp() { return tp; }, get golf() { return golf; }, get nb() { return nb; } });

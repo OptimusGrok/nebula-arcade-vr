@@ -1042,7 +1042,7 @@
 
   var swInfo = '?';
   function probeSW() { try { var ctl = navigator.serviceWorker && navigator.serviceWorker.controller ? 'ctl' : 'no-ctl';
-    if (root.caches && caches.keys) caches.keys().then(function (ks) { swInfo = (ks.filter(function (k) { return k.indexOf('galactic-arcade_vr-') === 0; }).join(',') || 'no cache') + ' ' + ctl; }).catch(function () { swInfo = ctl; }); else swInfo = ctl; } catch (e) {} }
+    if (root.caches && caches.keys) caches.keys().then(function (ks) { swInfo = (ks.filter(function (k) { return k.indexOf('nebula-arcade_vr-') === 0; }).join(',') || 'no cache') + ' ' + ctl; }).catch(function () { swInfo = ctl; }); else swInfo = ctl; } catch (e) {} }
   function start() {
     probeSW(); setInterval(probeSW, 5000);
     applyCss();

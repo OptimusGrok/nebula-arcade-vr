@@ -11,7 +11,7 @@ const { open } = require('./lib');
     await page.waitForFunction(() => navigator.serviceWorker.getRegistration().then(r => !!(r && r.active)), null, { timeout: 120000 }); lg('sw active');
     const sw = await page.evaluate(async () => { const reg = await navigator.serviceWorker.getRegistration(); const want = (await (await fetch('sw.js')).text()).match(/const FALLBACKS=\[([^\]]*)\]/)[1].split(',').map(x => x.replace(/'/g, ''));
       const t0 = Date.now(); let have = 0, keys = [];
-      while (Date.now() - t0 < 60000) { keys = await caches.keys(); const c = await caches.open(keys.find(k => k.startsWith('galactic-arcade_vr-')));
+      while (Date.now() - t0 < 60000) { keys = await caches.keys(); const c = await caches.open(keys.find(k => k.startsWith('nebula-arcade_vr-')));
         have = 0; for (const u of want) if (await c.match(u)) have++; if (have === want.length) break; await new Promise(r => setTimeout(r, 1000)); }
       return { active: !!reg.active, want: want.length, have, keys }; });
     chk(sw.active && sw.have === sw.want, 'SW active, KTX2 fallbacks cached in the background after install ' + JSON.stringify(sw));

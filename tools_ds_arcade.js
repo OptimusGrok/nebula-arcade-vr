@@ -1,4 +1,4 @@
-// ===== GALACTIC ARCADE: DEAD SIGNAL cabinet hooks (injected inside the game's IIFE by tools_build_ds_play.py; the original game is never edited) =====
+// ===== NEBULA ARCADE: DEAD SIGNAL cabinet hooks (injected inside the game's IIFE by tools_build_ds_play.py; the original game is never edited) =====
 // 5 tickets = one run. Gold tickets lie on the floor of every level (next to the game's own pickups), some enemies drop one and each cleared
 // level pays a bonus: a fair run returns ~15 tickets (about 3 per ticket spent). Each pickup pays 1 ticket via TicketArt.collect('ds').
 (function(){

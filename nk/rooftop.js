@@ -186,7 +186,7 @@ export async function buildRooftop({ glowTex, COL = { L: 0x18d8ff, R: 0xff2bd6 }
   // ---- neon signs: one 512x512 canvas atlas, 8 strips; ONE additive mesh (+ mirrored copies) with a per-sign flicker ----
   const cv = document.createElement('canvas'); cv.width = cv.height = 512; const g = cv.getContext('2d');
   const WORDS = [['NEON KNOCKOUT', '#ffffff', '#ff2bd6'], ['RAMEN 24H', '#ffd0f4', '#ff2bd6'], ['CYBER GYM', '#d8fbff', '#18d8ff'], ['KO CLUB', '#fff3c0', '#ffb02b'],
-    ['HOTEL', '#ffd0d8', '#ff3355'], ['ARCADE', '#d8fbff', '#18d8ff'], ['BAR · OPEN', '#e8d8ff', '#9a5bff'], ['GALACTIC', '#ffffff', '#7fffd4']];
+    ['HOTEL', '#ffd0d8', '#ff3355'], ['ARCADE', '#d8fbff', '#18d8ff'], ['BAR · OPEN', '#e8d8ff', '#9a5bff'], ['NEBULA', '#ffffff', '#7fffd4']];
   WORDS.forEach(([t, fill, glow], i) => { const y = i * 64 + 32; g.font = '900 44px system-ui,Arial Black,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     const tw = g.measureText(t).width; if (tw > 480) g.font = '900 ' + Math.floor(44 * 480 / tw) + 'px system-ui,Arial Black,sans-serif';
     g.shadowColor = glow; g.shadowBlur = 14; g.fillStyle = glow; g.fillText(t, 256, y); g.shadowBlur = 4; g.fillStyle = fill; g.fillText(t, 256, y); });

@@ -1,4 +1,4 @@
-# Galactic Arcade icons: nested neon hexagons on full-bleed black.
+# Nebula Arcade icons: nested neon hexagons on full-bleed black.
 # v27 / vrtest-v19 (t501u/t502u): the 'any' icons (192, 512, 180 apple-touch) are full-size art: the outer pink hexagon
 # runs to within ~2% of the top and bottom edges (a pointy-top hexagon is 0.87 as wide as it is tall, so the sides keep
 # a little black). The maskable 512 keeps the whole logo inside the 80% safe zone so launchers can crop it to a circle.

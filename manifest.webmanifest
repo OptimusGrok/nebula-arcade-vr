@@ -1,6 +1,6 @@
 {
-  "name": "Galactic Arcade",
-  "short_name": "Galactic Arcade",
+  "name": "Nebula Arcade",
+  "short_name": "Nebula Arcade",
   "description": "Walk a neon cyberpunk arcade as the monkey.",
   "start_url": "./",
   "scope": "./",
@@ -10,8 +10,8 @@
   "background_color": "#000000",
   "theme_color": "#000000",
   "icons": [
-    {"src": "icons/icon-192.png?v=28", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-    {"src": "icons/icon-512.png?v=28", "sizes": "512x512", "type": "image/png", "purpose": "any"},
-    {"src": "icons/icon-maskable-512.png?v=28", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+    {"src": "icons/icon-192.png?v=29", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png?v=29", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-maskable-512.png?v=29", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
   ]
 }

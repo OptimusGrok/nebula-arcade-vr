@@ -1,4 +1,4 @@
-// Galactic Arcade VR - WebXR for Meta Quest Browser (and any WebXR headset).
+// Nebula Arcade VR - WebXR for Meta Quest Browser (and any WebXR headset).
 // ENTER VR on the arcade floor -> the headset is the camera at real-world scale (1 unit = 1 m; cabinets are life size).
 //   LEFT STICK   smooth walk where you look (same wall / cabinet collision as the flat game)
 //   RIGHT STICK  left/right = smooth turn; the further you push, the faster (deadzone 0.15, x^2 curve, max 90 deg/s) (t350u)

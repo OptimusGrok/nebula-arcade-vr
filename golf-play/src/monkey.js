@@ -1,4 +1,4 @@
-// Copied from Galactic Arcade main.js makeMonkey (DO NOT edit neon-arcade).
+// Copied from Nebula Arcade main.js makeMonkey (DO NOT edit neon-arcade).
 // Exports makeMonkey(THREE) -> Group named 'monkey'.
 export function makeMonkey(THREE) {
   function canvasTex(w, h, draw, rep) {
