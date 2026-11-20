@@ -641,7 +641,7 @@
     var hats = hatMeshes(T, cap), src = null;
     if (k === 'hat' && v === 'cap') src = cap; else if (k === 'hat') src = hats[v]; else if (k === 'glasses') src = hats.gl && hats.gl[v]; else if (k === 'back') src = hats.bk && hats.bk[v];
     else if (k === 'hand' && v === 'pistol') src = pistolOf(T, A.monkey);
-    if (!src) return null; var was = src.visible; src.visible = true; var c = src.clone(true); src.visible = was; c.visible = true; c.position.set(0, 0, 0); c.rotation.set(0, 0, 0); c.scale.set(1, 1, 1); return c;
+    if (!src) return null; var was = src.visible; src.visible = true; var c = src.clone(true); src.visible = was; c.visible = true; c.matrixAutoUpdate = true; if (c.userData) delete c.userData.vrFit; c.position.set(0, 0, 0); c.rotation.set(0, 0, 0); c.scale.set(1, 1, 1); c.updateMatrix(); return c;   // vrtest-v28: the VR-fitted pistol has matrixAutoUpdate off; a preview copy must not inherit that
   }
   function accessoryStats() {
     var A = window.__arcade, out = {}; if (!A || !A.monkey) return out; var T = A.THREE, cap = capOf(A.monkey); if (!cap) return out;

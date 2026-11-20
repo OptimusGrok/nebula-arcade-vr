@@ -6,7 +6,7 @@
 // uses different localStorage keys (neonko.*); this copy uses gaNK.*.
 import * as THREE from 'three';
 import { gloveSkin, gloveState, ownsGlove, wearGlove, gloveIds } from '../nkgloves.js';
-import { buildRooftop } from './rooftop.js?v=30';
+import { buildRooftop } from './rooftop.js?v=31';
 
 export const NK_DIFF = {
   easy: { label: 'EASY', bpm: 110, travel: 2.5, duck: 8, mix: 0.6, mult: 0.6 },
@@ -722,7 +722,7 @@ function setScenery(id, opts = {}) { if (id !== 'rooftop') id = 'studio'; if (NO
 function placeBoard() { board.m.updateMatrixWorld(); board.m.lookAt(toWorld(_w2.set(0, 1.6, 0), new THREE.Vector3())); }
 
 // ---------- VR: the arcade's controllers are the gloves ----------
-const _gq = new THREE.Quaternion(), _gp = new THREE.Vector3(), _go = new THREE.Vector3(0, -0.01, 0.03); const _rq = new THREE.Quaternion(), _w3 = new THREE.Vector3(), _w3b = new THREE.Vector3(), _bp = new THREE.Vector3();
+const _gq = new THREE.Quaternion(), _gp = new THREE.Vector3(), _go = new THREE.Vector3(0, -0.01, 0.03); const _rq = new THREE.Quaternion(), _w3 = new THREE.Vector3(), _w3b = new THREE.Vector3(), _bp = new THREE.Vector3(), _bm = new THREE.Matrix4(), _bmi = new THREE.Matrix4(), _bs = new THREE.Vector3();
 function vrGloves() { for (const s of ['L', 'R']) { const G = glove[s], gp = ENV.grip(s === 'L' ? 'left' : 'right'); G.on = !!gp; G.obj.visible = !!gp; G.src = gp ? gp.src : null; if (!gp) continue;
     gp.obj.updateMatrixWorld(true); gp.obj.matrixWorld.decompose(_gp, _gq, _w2); G.obj.quaternion.copy(_gq); G.obj.position.copy(_go).applyQuaternion(_gq).add(_gp).sub(root.position);
     if (s === 'R') placeBlaster(gp, G); } }
@@ -734,14 +734,22 @@ function placeBlaster(gp, G) { const b = shootOn() && state.vr && gp ? blasterGe
   if (G) G.obj.visible = false; b.visible = true;
   gp.obj.updateMatrixWorld(true); gp.obj.matrixWorld.decompose(_bp, _rq, _w3);
   const rc = gp.ray || gp.obj; rc.updateMatrixWorld(true); rc.matrixWorld.decompose(_w3, _rq, _w3b);
-  b.quaternion.copy(_rq).multiply(BL_Q); b.position.copy(BL_OFF).applyQuaternion(_rq).add(_bp).sub(root.position); b.updateMatrixWorld(true); BL.placed = (BL.placed || 0) + 1; return true; }
+  b.quaternion.copy(_rq).multiply(BL_Q); _w3.copy(BL_OFF).applyQuaternion(_rq).add(_bp);   // world pose of the gun: handle in the hand, barrel along the ray
+  root.updateWorldMatrix(true, false); _bm.compose(_w3, b.quaternion, _bs.setScalar(BL_S)); b.matrix.copy(_bmi.copy(root.matrixWorld).invert()).multiply(_bm);   // -> local to the studio root
+  b.matrix.decompose(b.position, b.quaternion, b.scale); b.matrixAutoUpdate = false; b.matrixWorldNeedsUpdate = true; b.updateMatrixWorld(true); BL.placed = (BL.placed || 0) + 1; return true; }
 // vrtest-v25: the arcade's laser blaster (player.js's pistol model, cloned once) in the right hand in SHOOT. Barrel (+Z of the model) along the grip's -Z.
 const BL = { m: null, muzzle: null, tried: false }, BL_Q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI), BL_OFF = new THREE.Vector3(0, 0.035, 0.02), BL_S = 0.45;
 function blasterGet() { if (BL.m || BL.tried) return BL.m; BL.tried = true; let c = null;
   try { const P = window.__gaPlayer; c = P && P.previewItem ? P.previewItem('hand', 'pistol') : null; } catch (e) { c = null; }
   if (!c) { c = new THREE.Group(); const body = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 0.5), new THREE.MeshBasicMaterial({ color: 0x3a4558 })); body.position.z = 0.25; c.add(body);
     const mz = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.05, 8), new THREE.MeshBasicMaterial({ color: 0x48f2ff })); mz.rotation.x = Math.PI / 2; mz.position.set(0, 0.03, 0.6); mz.name = 'gaPistolMuzzle'; c.add(mz); }
+  // vrtest-v28 (Dave t519u, real Quest): the arcade fits the EQUIPPED pistol to the controller with matrixAutoUpdate = false + a hand-made
+  // matrix (vr.js gunFit). A clone inherits both, so v25-v27 wrote position / quaternion into an object that never rebuilt its matrix: the gun
+  // stayed at the studio origin (the player's feet, muzzle under the floor) and every bolt left from there. The clone is now cleaned (every
+  // node rebuilds its own matrix, no vrFit flag) and placeBlaster() writes the gun's matrix itself, the same way the arcade's first-person gun does.
+  c.traverse(o => { o.matrixAutoUpdate = true; if (o.userData) { delete o.userData.vrFit; } o.updateMatrix(); });
   c.name = 'nkBlaster'; c.scale.setScalar(BL_S); c.traverse(o => { o.frustumCulled = false; if (o.name === 'gaPistolMuzzle') { o.name = 'nkBlasterMuzzle'; BL.muzzle = o; } });
+  c.matrixAutoUpdate = false;   // placeBlaster() composes c.matrix every frame
   c.visible = false; scene.add(c); BL.m = c; return c; }
 // vrtest-v25: a blaster shot = a ray (world o, d) against the live targets (sphere test, a dozen targets: cheap). Bolts / beams hit the nearest
 // target (the beam: every target it touches, each frame). Timing: PERFECT when the target is about to reach you, GREAT mid-way, GOOD far out.
@@ -889,7 +897,7 @@ function update(dt) {
 }
 function tick(dt) {
   const was = inStudio; inStudio = ENV.inStudio();
-  if (!inStudio) { if (was) { abort('left the studio'); state.duckT = 0; try { ENV.flatDuck(0); } catch (e) {} root.visible = false; for (const s of ['L', 'R']) glove[s].obj.visible = false; ENV.setHide({ models: false, rays: false }); ui(); } return; }
+  if (!inStudio) { if (was) { abort('left the studio'); state.duckT = 0; try { ENV.flatDuck(0); } catch (e) {} root.visible = false; for (const s of ['L', 'R']) glove[s].obj.visible = false; if (BL.m) BL.m.visible = false; ENV.setHide({ models: false, rays: false }); ui(); } return; }
   if (!was) { root.visible = true; skin = gloveSkin(); applySkin(gloveState().on); drawBoard(); toTitle(); }
   update(Math.min(dt, 0.1) * (window.__nkSpeed ?? 1));
 }

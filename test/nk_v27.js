@@ -32,6 +32,11 @@ const { openVR, H, IWER_SRC, SETUP } = require('./vrlib');
       chk(g.vis && !g.glove && g.gun[1] >= 1.1 && g.gun[1] <= 1.45 && dist(g.gun, g.ctrl) < 0.15, `1) ${nm}: blaster drawn in the right hand at hand height (y ${g.gun[1]}), right glove hidden`, { gun: g.gun, ctrl: g.ctrl });
       chk(g.muzzle[1] > 1.0 && dot(g.barrel, g.ray) > 0.999 && dot(nrm(g.muzzle.map((v, i) => v - g.gun[i])), g.barrel) > 0.8, `1) ${nm}: barrel along the pointing ray (dot ${dot(g.barrel, g.ray).toFixed(5)}), muzzle in front of the hand`, { muzzle: g.muzzle, barrel: g.barrel, ray: g.ray });
       chk(g.sight && g.sightMz < 0.01, `1) ${nm}: aiming line starts at the muzzle`, { sightMz: g.sightMz }); }
+    // vrtest-v28: every ancestor of the gun visible up to the scene, the gun really drawn, and not at the feet (Dave's real-Quest bug)
+    { const r = await E(() => { const A = window.__arcade, G = window.__nkGame, b = G.blaster; let m = null; b.traverse(o => { if (!m && o.isMesh) m = o; }); if (!m.__hk) { m.__hk = 1; const f0 = m.onBeforeRender; m.onBeforeRender = function () { G.__blR = (G.__blR || 0) + 1; return f0.apply(this, arguments); }; }
+        const ch = []; let p = b, top = null; while (p) { ch.push(p.visible); top = p; p = p.parent; } const w = b.getWorldPosition(new A.THREE.Vector3()), S = window.__gaVR; return { all: ch.every(Boolean), top: top === A.scene, r0: G.__blR || 0, y: w.y, feet: Math.hypot(w.x - S.rig.x, w.y, w.z - S.rig.z) }; });
+      await H.frames(page, 6); const r1 = await E(() => window.__nkGame.__blR || 0);
+      chk(r.all && r.top && r1 > r.r0 && r.y > 1.05 && r.feet > 0.9, 'gun: every ancestor visible up to the scene, actually drawn, at hand height (not the feet)', { y: +r.y.toFixed(3), feet: +r.feet.toFixed(3), renders: [r.r0, r1] }); }
     // 2+4) every fire type: the bolt / beam starts at the muzzle and travels along the barrel
     await hold([0.2, 1.25, -0.3], -0.1, 0.15);
     const fire = async (type, how) => { await E(t => window.__gaVR.setFireType(t), type); await H.frames(page, 3); const g = await gun(); await mark();

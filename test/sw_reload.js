@@ -29,8 +29,8 @@ const { open } = require('./lib');
     const S = window.__start || {};
     return {
       loadN: Number(sessionStorage.getItem('gaLoadN') || 0),
-      flag: sessionStorage.getItem('gavrReloaded.nebula-arcade_vr-v30'),
-      stale: keys.filter(k => k.indexOf('nebula-arcade_vr-') === 0 && k !== 'nebula-arcade_vr-v30'),
+      flag: sessionStorage.getItem('gavrReloaded.nebula-arcade_vr-v31'),
+      stale: keys.filter(k => k.indexOf('nebula-arcade_vr-') === 0 && k !== 'nebula-arcade_vr-v31'),
       live: ['galactic-arcade-v233', 'galactic-arcade-v199', 'galactic-arcade-test-v9', 'galactic-arcade_vrtest-v18'].filter(k => keys.includes(k)),
       updating: document.documentElement.classList.contains('ga-updating'),
       checked: !!(window.__gaUpdate && window.__gaUpdate.checked),
@@ -42,7 +42,7 @@ const { open } = require('./lib');
   });
   console.log('after boot', JSON.stringify(a));
   chk(a.loadN === 2, 'stale cache caused exactly one reload (loadN=' + a.loadN + ')');
-  chk(a.flag === '1', 'session guard gavrReloaded.nebula-arcade_vr-v30 is set');
+  chk(a.flag === '1', 'session guard gavrReloaded.nebula-arcade_vr-v31 is set');
   chk(a.stale.length === 0, 'old nebula-arcade_vr-* caches are gone (' + a.stale.join(',') + ')');
   chk(a.live.length === 4, 'live, test and VR test-link (galactic-arcade_vrtest-v18) caches untouched by the VR head script (' + a.live.join(',') + ')');
   chk(!a.updating && a.checked && !a.reloading, 'start screen is no longer blocked after the reload');
@@ -65,7 +65,7 @@ const { open } = require('./lib');
   await page.waitForTimeout(3000);
   const c = await page.evaluate(async () => ({ keys: await caches.keys(), scope: (await navigator.serviceWorker.getRegistration() || {}).scope || null, active: !!((await navigator.serviceWorker.getRegistration()) || {}).active }));
   console.log('after SW activate', JSON.stringify(c));
-  chk(c.active && c.keys.includes('nebula-arcade_vr-v30'), 'VR service worker active with its own cache nebula-arcade_vr-v30');
+  chk(c.active && c.keys.includes('nebula-arcade_vr-v31'), 'VR service worker active with its own cache nebula-arcade_vr-v31');
   chk(['galactic-arcade-v233', 'galactic-arcade-v199', 'galactic-arcade-test-v9', 'galactic-arcade_vrtest-v18'].every(k => c.keys.includes(k)), 'sw.js activate + delayed SW path left the live / test caches alone');
   chk(errors.filter(e => !/Failed to load|supabase|net::/i.test(e)).length === 0, 'no page errors ' + errors.join(' | '));
   await close();

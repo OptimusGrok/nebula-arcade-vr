@@ -82,3 +82,29 @@
 - Version: ?v=30 on every tag, window.__GA_VR 'vr30', cache nebula-arcade_vr-v30.
 - Tests (480x270, one at a time under the lock, local main build): vr_comfort_v22, nk_v23, nk_v24, nk_v25, nk_v27, vr_fire_types,
   vr_start_play (smoke), nk_vr, sw_reload, start: all pass, 0 FAIL.
+
+## VR v31: NK SHOOT gun at the feet on a real Quest, fixed (Dave t519u/t520u "update for both"; from vrtest-v28; sw nebula-arcade_vr-v31)
+- Dave (t519u/t520u, real Quest): "No gun or controller on the right and the fire is still coming from the players feet in neon knockout."
+- ROOT CAUSE: in the arcade, the EQUIPPED laser pistol is fitted to the right controller by vr.js gunFit(): pg.matrix is written by hand and
+  pg.matrixAutoUpdate = false (pg.userData.vrFit). The NK blaster was made with player.js previewItem("hand","pistol") = src.clone(true),
+  which copies matrixAutoUpdate = false and that frozen matrix. NK then set position / quaternion every frame, but with matrixAutoUpdate off
+  three.js never rebuilt the matrix, so the gun stayed at the nkStudio origin = where the player stands (gun at y -0.02, muzzle at y -0.20,
+  under the floor: "no gun on the right"), and laserAim() takes the muzzle as the shot origin, so every bolt / beam / the aim line started at
+  the feet and flew up toward the targets. The emulator tests never had the pistol equipped (no gunFit), so they passed. Controller index
+  order and reconnects were checked too and are NOT the cause (handedness lookup works with right = index 0 and after a reconnect).
+  The NK controller models are hidden on purpose in Neon Knockout (gloves / the gun replace them), so the missing gun was the only visible symptom.
+- FIX: nk/nkgame.js blasterGet() cleans the clone (every node matrixAutoUpdate = true, vrFit flag removed, matrices rebuilt);
+  placeBlaster() composes the gun matrix itself (world pose: handle at the right grip, barrel along the pointing ray, scale 0.45 -> local to
+  the studio root, matrixAutoUpdate false), the same explicit-matrix way the arcade first-person gun is drawn. player.js previewItem() also
+  returns a copy with matrixAutoUpdate on. The gun is hidden when you leave the studio. PUNCH unchanged (right glove).
+- Test test/nk_v28.js reproduces Dave's flow: pistol bought + equipped + held in the arcade (gunFit on), controllers connected in SWAPPED
+  order (right = index 0, via a test hook that reverses inputsourceschange), beam with the NK pad, MODE orb -> SHOOT, title + round in 3 hand
+  poses, controller drop + reconnect inside NK. Checks: every ancestor of the gun visible up to the scene, the gun actually drawn
+  (onBeforeRender), gun 4 cm from the right grip at y 1.24-1.35 and > 0.9 m from the feet, muzzle at hand height, barrel . ray >= 0.999,
+  CLASSIC / PULSE / CHARGE / SCATTER bolts start 3 cm in front of the muzzle and stay on the muzzle-barrel line, the beam starts at the
+  muzzle, the aim line starts at the muzzle, aimed shots score, PUNCH brings the glove back, no console errors.
+  Before the fix the same test FAILED: gun (-80.00, -0.02, -0.03) = the feet, muzzle y -0.20, bolts from y -0.20. After: ALL PASS.
+  test/nk_v27.js also checks the ancestor chain, onBeforeRender and not-at-the-feet.
+- Main only takes nk/nkgame.js + player.js + tests from the test repo; no DEBUG overlay, no test labels. ?v=31, __GA_VR vr31.
+- Tests on the main build (480x270, one at a time under the lock): nk_v28, nk_v27, nk_v25, vr_fire_types, vr_start_play (smoke), sw_reload,
+  start: all pass (start.js timed out once on a reload under high box load, passed on the rerun).
