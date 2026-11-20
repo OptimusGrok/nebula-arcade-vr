@@ -1,6 +1,6 @@
 // NEON KNOCKOUT · CYBERPUNK ROOFTOP scenery (vrtest-v20, Dave t503u). Built procedurally, no image files:
 // sky dome (gradient + clouds + stars in the shader), a skyline of instanced towers whose lit windows are computed in the shader
-// (no window texture), a wet roof slab with reflecting puddles (the mirrored neon under the floor shows through the puddles; the
+// (no window texture), a grey weathered concrete roof slab (v23: opaque, subtle puddles with a faint sky sheen; the
 // sky is reflected in the shader), parapet + railing + HVAC units + stairwell hut + water tank + antenna (ONE merged mesh),
 // neon strips (ONE merged mesh, with dim mirrored copies for the puddles), neon signs from one 512x512 canvas atlas (ONE mesh),
 // light rain (ONE LineSegments animated in the vertex shader). No lights, no shadows. dispose() frees every GPU resource.
@@ -92,25 +92,23 @@ export async function buildRooftop({ glowTex, COL = { L: 0x18d8ff, R: 0xff2bd6 }
   tower.instanceMatrix.needsUpdate = true; if (tower.instanceColor) tower.instanceColor.needsUpdate = true; tower.computeBoundingSphere(); tower.frustumCulled = false; group.add(tower);
 
   await brk();
-  // ---- the roof slab: wet concrete, reflecting puddles, the play lanes + ring kept (same look as the studio floor's cues) ----
+  // ---- the roof slab (vrtest-v23, Dave t510u): plain grey weathered concrete. 1.5 m slabs with seams, per-slab tone, wear + aggregate noise,
+  // dark stains / water marks, a few subtle puddles (dark, faint sky sheen, no neon). No lane / ring / glow cues (gameplay doesn't need them).
   const roofMat = own(new THREE.ShaderMaterial({ uniforms: { uT, uBeat, uPow, uFog: { value: ROOF_FOG }, uO: { value: new THREE.Vector3() } },
     vertexShader: 'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
-    fragmentShader: 'uniform float uT;uniform float uBeat;uniform float uPow;uniform vec3 uFog;uniform vec3 uO;varying vec3 vW;' + NOISE + SKY
+    fragmentShader: 'uniform float uT;uniform vec3 uFog;uniform vec3 uO;varying vec3 vW;' + NOISE + SKY
       + 'void main(){vec3 L=vW-uO;vec2 p=L.xz;'
-      + 'vec2 g=abs(fract(p/1.5)-0.5);float seam=smoothstep(0.03,0.0,min(g.x,g.y));float n=vn(p*1.3)*0.6+vn(p*5.)*0.4;'
-      + 'vec3 col=vec3(0.045,0.044,0.06)*(0.65+0.55*n)-seam*0.018;'
-      + 'float pd=smoothstep(0.56,0.63,vn(p*0.33+3.)*0.7+vn(p*1.15)*0.3);'   // puddles
+      + 'vec2 sc=floor(p/1.5),g=abs(fract(p/1.5)-0.5);float seam=smoothstep(0.012,0.0,0.5-max(g.x,g.y));'
+      + 'float tone=0.86+0.22*h1(sc);float n=vn(p*0.9)*0.5+vn(p*3.7)*0.3+vn(p*17.)*0.2;float ag=step(0.82,h1(floor(p*90.)))*0.05;'
+      + 'vec3 col=vec3(0.30,0.30,0.31)*tone*(0.72+0.42*n)+ag;'
+      + 'float stn=smoothstep(0.55,0.75,vn(p*0.45+7.)*0.65+vn(p*2.3)*0.35);col*=1.-stn*0.38;'   // stains / old water marks
+      + 'col*=1.-seam*0.55;col*=0.92+0.08*vn(p*0.15+1.);'
+      + 'float pd=smoothstep(0.66,0.71,vn(p*0.33+3.)*0.7+vn(p*1.15)*0.3);'   // subtle puddles
       + 'vec3 V=normalize(vW-cameraPosition);vec3 R=reflect(V,vec3(0.,1.,0.));float fr=pow(1.-abs(V.y),3.);vec3 sk=skyC(R.y);'
-      + 'vec2 rc=floor(p*1.6),rl=fract(p*1.6)-0.5-(vec2(h1(rc),h1(rc+5.))-0.5)*0.5;float rt=fract(uT*0.9+h1(rc+9.));float rip=smoothstep(0.035,0.,abs(length(rl)-rt*0.42))*(1.-rt);'
-      + 'col=mix(col,col*0.35+sk*(0.18+0.55*fr)+rip*0.06,pd);col+=sk*fr*0.07*(1.-pd);'
-      // the studio floor's play cues, kept: the two lanes, the beat ring, the hot glow ahead
-      + 'float d=length(p-vec2(0.,-1.5));float lane=smoothstep(0.06,0.0,abs(abs(p.x)-0.95));float flow=0.5+0.5*sin(p.y*1.4+uT*9.);'
-      + 'col+=lane*mix(vec3(0.1,0.85,1.0),vec3(1.0,0.2,0.85),step(0.,p.x))*(0.45+0.4*flow)*exp(-max(0.,-p.y)*0.04)*0.8;'
-      + 'vec3 hot=mix(vec3(0.55,0.05,0.85),vec3(1.0,0.75,0.2),uPow);col+=hot*0.14*exp(-d*0.45)*(0.6+0.6*uBeat);'
-      + 'float ring=smoothstep(0.05,0.0,abs(length(p)-1.25-uBeat*0.15));col+=ring*vec3(0.2,0.6,1.)*0.35;'
+      + 'col=mix(col,col*0.55+sk*(0.06+0.16*fr),pd*0.8);'
       + 'float fg=1.-exp(-pow(length(vW-cameraPosition)*0.02,2.));col=mix(col,uFog,fg);'
-      + 'gl_FragColor=vec4(col,mix(mix(0.97,0.42,pd),1.,fg));}',
-    transparent: true, depthWrite: false }));
+      + 'gl_FragColor=vec4(col,1.);}',
+    transparent: false, depthWrite: true }));   // v23: opaque (the mirrored neon under the slab no longer shows through)
   const roof = add(new THREE.PlaneGeometry(17, 44), roofMat, 'nkRoofSlab', -1); roof.rotation.x = -Math.PI / 2; roof.position.set(0, 0.002, -15);
   const X0 = 8.5, Z0 = 7, Z1 = -37;
 

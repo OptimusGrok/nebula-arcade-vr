@@ -17,6 +17,8 @@ export function setupOpts({ play, kiosk, shield, st, monkey, setFloor, getFloor,
   <button class="opB" id="opTitle">BACK TO TITLE SCREEN</button>
   <button class="opB" id="opMute">MUTE: <span>OFF</span></button>
   <button class="opB" id="opCool">COOLER PHONE: <span>ON</span></button>
+  <button class="opB" id="opMove">VR MOVEMENT: <span>TELEPORT</span></button>
+  <button class="opB" id="opNkMode">NEON KNOCKOUT: <span>PUNCH</span></button>
   <div class="opSub">FLOOR / WALLS / WINDOW <small id="opRoomNote"></small></div>
   <div class="opTabs"><button type="button" class="opTab" id="opTabFloor">FLOOR</button><button type="button" class="opTab off" id="opTabWalls">WALLS</button><button type="button" class="opTab off" id="opTabWin">WINDOW</button></div>
   <div id="opFlTiles"></div><div id="opWlTiles"></div><div id="opWnTiles"></div>
@@ -119,6 +121,15 @@ export function setupOpts({ play, kiosk, shield, st, monkey, setFloor, getFloor,
   on('bOpt', () => show(!O.open)); on('opX', () => show(false));
   on('opTitle', () => { show(false); play.home.ask(true); });
   on('opMute', () => { window.__mute.set(!window.__mute.on); render(); });
+  // vrtest-v22 (t509u): VR MOVEMENT: TELEPORT (left stick arc + fade) / SMOOTH (old left-stick walk); snap turn in both. galacticarcade.vrMove; hidden with ?oldmove=1
+  const mvGet = () => { try { return localStorage.getItem('galacticarcade.vrMove') === 'smooth' ? 'smooth' : 'teleport'; } catch (e) { return 'teleport'; } };
+  const mvSync = () => { const b = $('opMove'); if (!b) return; if (/[?&]oldmove=1\b/.test(location.search)) { b.style.display = 'none'; return; } b.querySelector('span').textContent = mvGet() === 'smooth' ? 'SMOOTH WALK' : 'TELEPORT'; b.classList.toggle('sel', mvGet() === 'smooth'); };
+  // vrtest-v25 (Dave t514u): Neon Knockout MODE: PUNCH / SHOOT (galacticarcade.nkMode; SHOOT plays in the headset). ?noshootmode=1 hides it.
+  const nkmGet = () => { try { return localStorage.getItem('galacticarcade.nkMode') === 'shoot' ? 'shoot' : 'punch'; } catch (e) { return 'punch'; } };
+  const nkmSync = () => { const b = $('opNkMode'); if (!b) return; if (/[?&]noshootmode=1\b/.test(location.search)) { b.style.display = 'none'; return; } const m = window.__nkGame && window.__nkGame.mode || nkmGet(); b.querySelector('span').textContent = m === 'shoot' ? 'SHOOT (VR)' : 'PUNCH'; b.classList.toggle('sel', m === 'shoot'); };
+  nkmSync(); on('opNkMode', () => { const nx = (window.__nkGame && window.__nkGame.mode || nkmGet()) === 'shoot' ? 'punch' : 'shoot'; if (window.__nkGame && window.__nkGame.setMode) window.__nkGame.setMode(nx); else try { localStorage.setItem('galacticarcade.nkMode', nx); } catch (e) {} nkmSync(); });
+  window.__gaNkModeSync = nkmSync;
+  mvSync(); on('opMove', () => { const nx = mvGet() === 'smooth' ? 'teleport' : 'smooth'; if (window.__gaMove) window.__gaMove.set(nx); else try { localStorage.setItem('galacticarcade.vrMove', nx); } catch (e) {} mvSync(); });
   on('opCool', () => { if (window.__powerSave) window.__powerSave.set(!window.__powerSave.on); render(); });
   on('opTabFloor', () => roomTab('floor')); on('opTabWalls', () => roomTab('walls')); on('opTabWin', () => roomTab('window'));
   op.addEventListener('click', e => {

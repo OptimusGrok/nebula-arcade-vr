@@ -1,7 +1,9 @@
 // Nebula Arcade VR - WebXR for Meta Quest Browser (and any WebXR headset).
 // ENTER VR on the arcade floor -> the headset is the camera at real-world scale (1 unit = 1 m; cabinets are life size).
-//   LEFT STICK   smooth walk where you look (same wall / cabinet collision as the flat game)
-//   RIGHT STICK  left/right = smooth turn; the further you push, the faster (deadzone 0.15, x^2 curve, max 90 deg/s) (t350u)
+//   LEFT STICK   vrtest-v22 (t508u/t509u): push forward = teleport arc + ring, release = fade-to-black teleport (MOVEMENT: SMOOTH in the
+//                Y menu / OPTIONS = the old smooth walk where you look, same wall / cabinet collision as the flat game)
+//   RIGHT STICK  vrtest-v22: flick left / right = 30 deg snap turn with a quick fade (re-centre between snaps); off while the fire menu is open.
+//                Neon Knockout, Neon Bricks and ?oldmove=1 keep the old smooth turn (deadzone 0.15, x^2 curve, max 90 deg/s) (t350u)
 //   R STICK CLICK  (button 3) holographic laser fire-type menu above the right controller; stick moves the highlight, A selects, click again closes (t489u)
 //   L STICK CLICK  hide / show the left-wrist HUD (battery, time, player count)
 //   TRIGGER      point at a cabinet = play it; point at the floor = teleport there; point at a sign / menu button = press it
@@ -304,13 +306,15 @@ export function setupVR(A) {
   const nkRound = () => { const N = window.__nkGame; return !!(N && N.inStudio && N.state.mode === 'play'); };
   const nkPlaying = () => nkRound() && !window.__nkGame.state.paused;   // v17: a paused round shows the rays again (for the pause panel)
   const nkPaused = () => nkRound() && !!window.__nkGame.state.paused;
+  const nkShootOn = () => { const N = window.__nkGame; return !!(N && N.mode === 'shoot' && N.inStudio && nkIn() && renderer.xr.isPresenting); };   // vrtest-v25 (Dave t514u)
+  S.nkShots = 0;
   S.nkPauses = 0; S.nkResets = 0; S.nkExits = 0;
   // v17 (t404u) / v23: B or Y during a Neon Knockout round = pause: RESUME / RESET GAME / EXIT GAME (exit beams back to the arcade, no tickets)
   function nkPause() { const N = window.__nkGame; if (!N || !N.pause()) return false; S.nkPauses++; uiOpen('nkPause'); return true; }
   function nkResume() { const N = window.__nkGame; if (UI.open === 'nkPause') uiClose(); if (N) N.resume(); }
   function nkReset() { const N = window.__nkGame; if (UI.open === 'nkPause') uiClose(); if (N && N.resetRound()) S.nkResets++; }
   function nkExit() { const N = window.__nkGame; if (UI.open === 'nkPause') uiClose(); if (N) N.abort('exit'); S.nkExits++; beam(); }
-  S.nkGrip = hand => { const i = ctrls.findIndex(c => c.userData.hand === hand && c.userData.src); return i >= 0 ? { obj: grips[i], src: ctrls[i].userData.src } : null; };
+  S.nkGrip = hand => { const i = ctrls.findIndex(c => c.userData.hand === hand && c.userData.src); return i >= 0 ? { obj: grips[i], ray: ctrls[i], src: ctrls[i].userData.src } : null; };   // vrtest-v27: + ray (target-ray space) so the NK blaster points where the shots go
   S.nkHide = null; S.nkHid = false;
   function nkCtrl() { const want = nkIn() && !!(S.nkHide && S.nkHide.models) && !!window.__nkGame; if (want) { ctrlModelsVis(false); S.nkHid = true; } else if (S.nkHid) { ctrlModelsVis(true); S.nkHid = false; } }
   function collect() { const K = kiosk(); if (!K || !K.pending || K.dispK < 1) return false; const n = K.pending;
@@ -334,8 +338,16 @@ export function setupVR(A) {
     const B = [], add = (id, label, x, y, w, h, on, act) => B.push({ id, label, x, y, w, h, on: on !== false, act });
     let title = '', sub = '', body = '';
     add('close', 'X', 900, 22, 100, 90, true, uiClose);
-    if (UI.open === 'nkPause') { B[0].act = nkResume; title = 'PAUSED'; sub = 'B / Y = RESUME · EXIT = BACK TO THE ARCADE · NO TICKETS FOR AN UNFINISHED ROUND';
-      add('nkResume', 'RESUME', 162, 210, 700, 140, true, nkResume); add('nkReset', 'RESET GAME', 162, 390, 700, 140, true, nkReset); add('nkExit', 'EXIT GAME', 162, 570, 700, 140, true, nkExit); }
+    // vrtest-v20 / v23 (Dave t510u): Neon Knockout SCENERY toggle (Y menu + pause panel)
+    const nkSceneryBtnMode = (x, y, w, h) => { const N = window.__nkGame; if (!(A.tp && A.tp.where === 3 && N && N.setMode && !N.noShoot)) return false;   // vrtest-v25: MODE: PUNCH / SHOOT
+      add('nkMode', 'NEON KNOCKOUT MODE: ' + (N.mode === 'shoot' ? 'SHOOT' : 'PUNCH'), x, y, w, h, true, () => { const m = N.setMode(N.mode === 'shoot' ? 'punch' : 'shoot'); say(m === 'shoot' ? 'MODE: SHOOT · TRIGGER FIRES' : 'MODE: PUNCH'); UI.key = ''; });
+      if (N.mode === 'shoot') B[B.length - 1].sel = true; return true; };
+    const nkSceneryBtn = (x, y, w, h) => { const N = window.__nkGame; if (!(A.tp && A.tp.where === 3 && N && N.setScenery && !N.noRoof)) return false;
+      add('nkScenery', 'SCENERY: ' + (N.sceneryWant !== N.scenery ? 'LOADING…' : N.scenery === 'rooftop' ? 'ROOFTOP' : 'STUDIO'), x, y, w, h, true, () => { const nx = N.sceneryWant === 'rooftop' ? 'studio' : 'rooftop'; N.setScenery(nx).then(() => { UI.key = ''; }); say(nx === 'rooftop' ? 'SCENERY: CYBERPUNK ROOFTOP' : 'SCENERY: NEON STUDIO'); UI.key = ''; });
+      if (N.sceneryWant === 'rooftop') B[B.length - 1].sel = true; return true; };
+    if (UI.open === 'nkPause') { B[0].act = nkResume; title = 'PAUSED'; sub = 'Y = RESUME · EXIT = BACK TO THE ARCADE · NO TICKETS FOR AN UNFINISHED ROUND';
+      add('nkResume', 'RESUME', 162, 196, 700, 100, true, nkResume); add('nkReset', 'RESET GAME', 162, 308, 700, 100, true, nkReset); add('nkExit', 'EXIT GAME', 162, 420, 700, 100, true, nkExit);
+      nkSceneryBtn(162, 532, 700, 84); nkSceneryBtnMode(162, 628, 700, 84); }   // vrtest-v23: SCENERY in the pause panel too
     if (UI.open === 'tickets') { const K = kiosk(); title = 'TICKET EXCHANGE';
       if (!K) sub = 'NOT READY'; else { const bal = K.C.bal, left = Math.max(0, Math.ceil((K.C.at + 36e5 - Date.now()) / 6e4));
         sub = 'CASH $' + bal + (bal < 5 ? '  ·  +$' + (5 - bal) + ' IN ' + left + ' MIN' : '');
@@ -399,16 +411,18 @@ export function setupVR(A) {
     else if (UI.open === 'menu') { const tp = A.tp, inShop = tp && tp.where === 2; title = 'MENU'; { const w = wallet(); sub = '$' + w.cash + ' CASH   ·   ' + w.tickets + ' TICKETS'; }
       // v12 (t388u): the monkey BACKPACK (prizes + accessories inside) and a FLOOR + WALLS square that shows a different floor every 5 s;
       // no BEAM (the pad signs beam) / BUY TICKETS (the ticket machine + its sign) / CLOSE: just the X (or GRIP)
-      add('pack', 'BACKPACK', 70, 180, 420, 350, true, () => { UI.packTab = 'prizes'; uiOpen('pack'); }); B[B.length - 1].art = 'pack';
-      add('room', 'FLOOR + WALLS', 534, 180, 420, 350, !!window.__setFloor, () => { UI.roomTab = UI.roomTab || 'floor'; uiOpen('room'); }); B[B.length - 1].art = 'floor';
+      add('pack', 'BACKPACK', 70, 180, 420, 290, true, () => { UI.packTab = 'prizes'; uiOpen('pack'); }); B[B.length - 1].art = 'pack';
+
+      add('room', 'FLOOR + WALLS', 534, 180, 420, 290, !!window.__setFloor, () => { UI.roomTab = UI.roomTab || 'floor'; uiOpen('room'); }); B[B.length - 1].art = 'floor';
       // v15 (t398u): background music only (music.js 'neonarcade.music', the same switch as the flat Options MUSIC button); game sounds + voice chat stay
+      if (nkSceneryBtnMode(70, 484, 884, 52)) {} else if (!cfOff()) { add('move', 'MOVEMENT: ' + (CF.mode === 'teleport' ? 'TELEPORT + SNAP TURN' : 'SMOOTH WALK + SNAP TURN'), 70, 484, 884, 52, true, () => { const m = setMoveMode(CF.mode === 'teleport' ? 'smooth' : 'teleport'); say(m === 'teleport' ? 'LEFT STICK FORWARD = TELEPORT' : 'LEFT STICK = SMOOTH WALK'); }); }   // vrtest-v22
       add('toTitle', 'BACK TO TITLE SCREEN', 524, 546, 430, 58, true, () => uiOpen('toTitle'));   // vrtest-v5 (Dave t462u)
       { const mu = window.__music, on = !mu || mu.on !== false; add('music', on ? 'MUTE MUSIC' : 'MUSIC ON', 70, 546, 430, 58, !!(mu && mu.setOn), () => { mu.setOn(!(mu.on !== false)); say(mu.on ? 'MUSIC ON' : 'MUSIC MUTED · GAME SOUNDS + VOICE STAY ON'); UI.key = ''; });
         if (!on) B[B.length - 1].sel = true; }
       // v14 (t396u): voice chat. MIC ON asks for the mic (only on this tap), then the same button mutes / unmutes; ✕ VC leaves voice
       const vc = window.__voice, vin = !!(vc && vc.state !== 'off');
       const N = window.__nkGame, inNK = !!(tp && tp.where === 3 && N && N.setScenery && !N.noRoof);   // vrtest-v20 (Dave t503u): in Neon Knockout this slot = SCENERY
-      if (inNK) { add('nkScenery', 'SCENERY: ' + (N.sceneryWant !== N.scenery ? 'LOADING…' : N.scenery === 'rooftop' ? 'ROOFTOP' : 'STUDIO'), 70, 620, 520, 100, true, () => { const nx = N.sceneryWant === 'rooftop' ? 'studio' : 'rooftop'; N.setScenery(nx).then(() => { UI.key = ''; }); say(nx === 'rooftop' ? 'SCENERY: CYBERPUNK ROOFTOP' : 'SCENERY: NEON STUDIO'); UI.key = ''; }); if (N.sceneryWant === 'rooftop') B[B.length - 1].sel = true; }
+      if (inNK) nkSceneryBtn(70, 620, 520, 100);
       else if (!inShop) add('nb', 'PLAY NEON BRICKS', 70, 620, 520, 100, !!nbApi(), nbStart);
       else add('shop', 'PRIZE SHOP', 70, 620, 520, 100, !!A.shop, () => uiOpen('shop'));
       add('mic', vc ? vc.label() : 'MIC ON', 610, 620, vin ? 224 : 344, 100, !!vc, vcTap); if (vc && vc.state === 'on') B[B.length - 1].sel = !vc.muted;
@@ -574,6 +588,7 @@ export function setupVR(A) {
   function dbg() { const q = location.search, f = n => new RegExp('[?&]' + n + '=1\\b').test(q);
     if (!window.__gaDbg) window.__gaDbg = { nomirror: f('nomirror'), nogolfroom: f('nogolfroom'), nogolflamps: f('nogolflamps'), nogrok: f('nogrok'), nowarm: f('nowarm'), golfold: /[?&]golflights=old\b/.test(q), noveil: f('noveil'), warmlog: f('warmlog') };
     const D = window.__gaDbg; if (D.warmlog == null) D.warmlog = f('warmlog');   // golf.js may build __gaDbg first
+    if (D.oldmove == null) D.oldmove = f('oldmove');   // vrtest-v22: old smooth walk + smooth turn, no teleport arc / snap turn
     if (D.oldacc == null) { D.oldacc = f('oldacc'); D.noatlas = f('noatlas'); D.nofiretypes = f('nofiretypes'); D.olddim = f('olddim'); D.beamlog = f('beamlog'); }
     return D; }
   S.dbg = dbg;
@@ -663,7 +678,7 @@ export function setupVR(A) {
     const fp = fpList(), was = fp.map(o => o.visible); for (const o of fp) o.visible = false; MV.fpHidden = fp.length;
     S.inMirror = true; pinScan(); pinLights(); try { MV.draw.call(t, renderer, scene, camera); MV.renders++; S.mirrorKicks++; } catch (e) { S.lastError = 'mirror ' + e; } S.inMirror = false; unpinLights();
     fp.forEach((o, i) => { o.visible = was[i]; }); monkey.visible = vis; }
-  const _fp = []; function fpList() { _fp.length = 0; for (const o of ctrls) _fp.push(o); for (const o of grips) _fp.push(o); _fp.push(dot, tpRing, hud, uiM); if (VL.glow) _fp.push(VL.glow); if (VL.beamMesh) _fp.push(VL.beamMesh); if (FM.group) _fp.push(FM.group); if (GF.gun) _fp.push(GF.gun, GF.hand, GF.ray); return _fp; }
+  const _fp = []; function fpList() { _fp.length = 0; for (const o of ctrls) _fp.push(o); for (const o of grips) _fp.push(o); _fp.push(dot, tpRing, hud, uiM, fadeM, arcM, arcRing); if (VL.glow) _fp.push(VL.glow); if (VL.beamMesh) _fp.push(VL.beamMesh); if (FM.group) _fp.push(FM.group); if (GF.gun) _fp.push(GF.gun, GF.hand, GF.ray); return _fp; }
   S.fpNames = () => fpList().map(o => o.name || o.type);
   S.ctrlFor = ctrlFor;   // vrtest-v2: golf.js puts the held putter on the right controller
   // ---------- t360u: the avatar's arms + hands follow the real controllers (so the mirror shows you holding them) ----------
@@ -1078,7 +1093,7 @@ export function setupVR(A) {
     if (S.head) st.yaw = S.head.yaw; st.camInit = false; monkey.visible = true;
     renderer.xr.setReferenceSpace(null); baseRef = null;
     if (saved) { Object.assign(camera, saved); camera.updateProjectionMatrix(); }
-    document.body.classList.remove('vr'); uiClose(); closeFireMenu(); laserEndBeam(); laserGlow(null); S.hudHidden = false; for (const g of signs) g.m.visible = false; fill.visible = false; hud.visible = scr.visible = dot.visible = tpRing.visible = false;
+    document.body.classList.remove('vr'); uiClose(); closeFireMenu(); fadeClear('left VR'); CF.aim = false; arcHide(); laserEndBeam(); laserGlow(null); S.hudHidden = false; for (const g of signs) g.m.visible = false; fill.visible = false; hud.visible = scr.visible = dot.visible = tpRing.visible = false;
     for (const f of document.querySelectorAll('iframe')) try { f.contentWindow.__gaVRPump && f.contentWindow.__gaVRPump(); } catch (e) {}   // hand frames back to the normal rAF
     mirrorVR(false); avatarHandsOff(); unadoptAll(); LS.done.clear();
     A.resumeFlat();
@@ -1095,6 +1110,7 @@ export function setupVR(A) {
   const laserOn = () => { const rf = window.__roomFire; try { return !!(rf && rf.equipped && rf.equipped()); } catch (e) { return false; } };
   S.gear = () => ({ jet: jetOn(), laser: laserOn(), flying: !!S.vrFly, firing: !!S.vrFire, flyFrames: S.flyFrames || 0, laserPulls: S.laserPulls || 0 });
   function gear(ok, dt) { const R = IN.right, rf = window.__roomFire;
+    if (nkShootOn()) { const fire = !!(R && R.trig && nkPlaying() && !FM.open && !UI.open); vrLaser(fire, dt, R); S.vrFire = fire; return; }   // vrtest-v25: NK SHOOT: the TRIGGER fires (no pistol needed)
     const jet = jetOn(), fly = !!(ok && jet && R && R.a && !FM.open && !FM.ateA);
     if (jet || S.vrFly) { if (st.fly) st.fly.hold = fly; if (fly) S.flyFrames = (S.flyFrames || 0) + 1; S.vrFly = fly; }
     const las = laserOn(), fire = !!(ok && las && R && R.b && rf && rf.shown && !FM.open);
@@ -1163,7 +1179,8 @@ export function setupVR(A) {
     FM.ateA = false;
     if (L && L.stickDown) { S.hudHidden = !S.hudHidden; S.hudToggles = (S.hudToggles || 0) + 1; if (L.src) pulse(L.src, 0.35, 20); }
     const walk = play.mode === 'walk' && !(A.tp && A.tp.locked) && !(A.shop && A.shop.open) && !(A.nb && A.nb.playing) && !nkPlaying();
-    if (R && R.stickDown && walk && !dbg().nofiretypes) { if (FM.open) closeFireMenu(); else openFireMenu(); if (R.src) pulse(R.src, 0.45, 28); }
+    const nkFm = nkShootOn() && play.mode === 'walk' && !(A.tp && A.tp.locked);   // vrtest-v25: the fire-type hologram in NK SHOOT too (also mid-round)
+    if (R && R.stickDown && (walk || nkFm) && !dbg().nofiretypes) { if (FM.open) closeFireMenu(); else openFireMenu(); if (R.src) pulse(R.src, 0.45, 28); }
     if (!FM.open) { FM.stickArmed = true; return; }
     if (R && R.aDown) { setFireType(FIRE_TYPES[FM.hover].id); FM.picks++; FM.ateA = true; FM.lastPick = FM.type; closeFireMenu(); if (R.src) pulse(R.src, 0.7, 35); return; }
     if (!R) return;
@@ -1181,6 +1198,7 @@ export function setupVR(A) {
     // t361u: the alien's shot leaves its floating machine (botEye, as roomfire.js does), aimed at where the right controller points
     // v13 (t395u): with the laser pistol in the avatar's right hand the shot leaves the gun's MUZZLE (the IK puts the hand on the controller
     // and turns the barrel along its ray), so in the mirror and in the world the bolt / beam comes out of the gun
+    if (nkShootOn()) { const m = window.__nkGame.blasterMuzzle(_le); if (m) _lo.copy(_le).addScaledVector(_ld, 0.03); return { o: _lo, d: _ld, nk: true }; }   // vrtest-v25: from the NK blaster's muzzle
     const pz = monkey.getObjectByName('gaPistolMuzzle'), pgun = pz && pz.parent;
     if (pz && pgun && pgun.visible && (monkey.userData || {}).char !== 'alien') { try { avatarHands(); } catch (e) {} pz.getWorldPosition(_le); _lo.copy(_le).addScaledVector(_ld, 0.03); VL.fromMuzzle = (VL.fromMuzzle || 0) + 1; return { o: _lo, d: _ld, muzzle: true }; }
     const u = monkey.userData || {}; if (u.char === 'alien') { const eye = monkey.getObjectByName('botEye') || u.bot; if (eye) { monkey.updateMatrixWorld(true); eye.getWorldPosition(_le); _lt.copy(_lo).addScaledVector(_ld, 20); _ld.copy(_lt).sub(_le).normalize(); _lo.copy(_le).addScaledVector(_ld, 0.12); return { o: _lo, d: _ld, alien: true }; } }
@@ -1216,6 +1234,14 @@ export function setupVR(A) {
       o.connect(f); o2.connect(f); f.connect(g); g.connect(ac.destination); o.start(t); o2.start(t); beamHum = { o, o2, g }; } catch (e) { beamHum = null; } }
   function shootAimed(aim, opts, R) {
     const rf = window.__roomFire; if (!rf || !rf.fire || !aim) return null;
+    if (nkShootOn()) {   // vrtest-v25: NK SHOOT: roomfire's pooled bolt (same look / sound), local only, then one ray test against the targets
+      const N = window.__nkGame, dir = opts.dir || aim.d, o = aim.o.toArray(), d = dir.toArray ? dir.toArray() : dir, k = Math.max(0, Math.min(0.999, opts.k || 0));
+      const L = rf.spawn ? rf.spawn(o, d, 'cyan', false, k, opts.color != null ? opts.color : fireCols(opts.kind).a, opts.life) : null;
+      if (!opts.silent) { try { if (opts.kind && opts.kind !== 'classic' && rf.zapKind) rf.zapKind(opts.kind, 'cyan'); else if (rf.zap) rf.zap('cyan'); } catch (e) {} }
+      const h = N.shootRay(o, d, { kind: opts.kind || FM.type, k }); S.nkShots++;
+      if (L && h && h.dist != null) L.life = Math.min(L.life, Math.max(0.03, h.dist / (rf.SPEED || 24)));   // the bolt ends at the target it hit
+      if (L) { VL.bolts++; VL.last = { o, d, k, char: 'monkey', kind: opts.kind || FM.type, nkHits: h ? h.hits : 0 }; }
+      return L; }
     const dir = opts.dir || aim.d, o = aim.o.toArray(), d = dir.toArray ? dir.toArray() : dir;
     const M = window.__mp, z0 = M && M.zap; let zh = null; if (z0) M.zap = (oo, dd, c) => { zh = c; return true; };
     let L = null; try { L = rf.fire(Object.assign({ fromRelease: true, o, d }, opts)); } finally { if (z0) M.zap = z0; }
@@ -1247,7 +1273,8 @@ export function setupVR(A) {
     else if (kind === 'beam') {
       laserGlow(null);
       if (held && aim) { if (!VL.held || !VL.beamHeld) { S.laserPulls = (S.laserPulls || 0) + 1; laserBeam(aim, col, { held: true }); VL.beams++; S.vrBeams = VL.beams; try { if (rf && rf.zapKind) rf.zapKind('beam', col.char === 'alien' ? 'red' : 'cyan'); } catch (e) {} startBeamHum(); if (R) pulse(R.src, 0.6, 30); }
-        else { laserBeam(aim, col, { held: true }); if (R && S.frames % 6 === 0) pulse(R.src, 0.4, 18); } }
+        else { laserBeam(aim, col, { held: true }); if (R && S.frames % 6 === 0) pulse(R.src, 0.4, 18); }
+        if (nkShootOn()) { const h = window.__nkGame.shootRay(aim.o.toArray(), aim.d.toArray(), { kind: 'beam' }); if (h && h.hits) { S.nkBeamHits = (S.nkBeamHits || 0) + h.hits; if (R) pulse(R.src, 0.8, 40); } } }
       else if (VL.beamHeld) laserEndBeam(); }
     VL.held = held; }
   ensureLaserFX();
@@ -1308,9 +1335,82 @@ export function setupVR(A) {
   function warmCheck() {
     if (!!A.shop !== S.warmShop) { S.warmShop = !!A.shop; if (A.shop && !PW.busy && !PW.done) S.warmReq = S.warmReq || 'shop'; }
     if (S.warmReq && S.frames > 1) { const why = S.warmReq; S.warmReq = null; pinScan(); pinLights(); warmXR(why); unpinLights(); } }
+
+  // ---------- vrtest-v22 (Dave t508u / t509u): COMFORT LOCOMOTION, like the Quest zombie games ----------
+  // LEFT stick forward = a parabolic arc from the left controller + a landing ring (cyan = OK, red = wall / cabinet / counter / outside /
+  // nothing to land on); release = fade to black (120 ms), the head lands on the ring (same facing), fade in (150 ms). Pull back or push
+  // sideways = cancel (re-centre to aim again). RIGHT stick flick = 30 deg snap turn around the head with a 70 / 90 ms fade, re-centre between
+  // snaps, never while the fire-type hologram is open. Both only where the free walk applies (arcade rooms, hall, shop, golf); Neon Knockout,
+  // Neon Bricks, chess and cabinet games are unchanged. MOVEMENT: TELEPORT / SMOOTH (Y menu + flat OPTIONS) = galacticarcade.vrMove; SMOOTH =
+  // the old left-stick walk (snap turn stays). ?oldmove=1 = everything as before v22. The fade is a black sphere locked to the head, drawn last,
+  // and it always clears: a beam, the PREPARING VR card, leaving VR or 1.5 s without finishing all force it off.
+  const MOVE_KEY = 'galacticarcade.vrMove', SNAP = Math.PI / 6, TP_RANGE = 9, ARC_N = 32;
+  const CF = { mode: (() => { try { return localStorage.getItem(MOVE_KEY) === 'smooth' ? 'smooth' : 'teleport'; } catch (e) { return 'teleport'; } })(),
+    aim: false, cancel: false, valid: false, landed: false, why: '', target: new THREE.Vector3(), snapArmed: true, snaps: 0, tps: 0, tpFails: 0, badReleases: 0, cancels: 0, aims: 0,
+    lastTpMs: null, lastSnapMs: null, fade: { a: 0, phase: 'idle', t0: 0, t1: 0, out: 0, inn: 0, fn: null, kind: '', starts: 0, done: 0, forced: 0, lastForced: null, maxA: 0 } };
+  const cfOff = () => !!dbg().oldmove;
+  function setMoveMode(m) { CF.mode = m === 'smooth' ? 'smooth' : 'teleport'; try { localStorage.setItem(MOVE_KEY, CF.mode); } catch (e) {} if (CF.mode !== 'teleport') { CF.aim = false; arcHide(); } UI.key = ''; return CF.mode; }
+  window.__gaMove = { get mode() { return cfOff() ? 'old' : CF.mode; }, set: setMoveMode, get off() { return cfOff(); } };
+  // the fade: same material settings as the teleport ring (same shader program: nothing new to compile)
+  const fadeM = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 10), new THREE.MeshBasicMaterial({ color: 0x000000, fog: false, toneMapped: false, transparent: true, opacity: 0, side: THREE.BackSide, depthTest: false, depthWrite: false }));
+  fadeM.name = 'vrFade'; fadeM.renderOrder = 5000; fadeM.visible = false; fadeM.frustumCulled = false; scene.add(fadeM);
+  function fadeStart(kind, outMs, inMs, fn) { const F = CF.fade; if (F.phase !== 'idle') return false; Object.assign(F, { phase: 'out', t0: performance.now(), out: outMs, inn: inMs, fn, kind, maxA: 0 }); F.starts++; return true; }
+  function fadeClear(why) { const F = CF.fade; if (why && (F.phase !== 'idle' || F.a > 0)) { F.forced++; F.lastForced = why; } F.phase = 'idle'; F.a = 0; F.fn = null; fadeM.visible = false; fadeM.material.opacity = 0; }
+  function fadeFrame() { const F = CF.fade; if (F.phase === 'idle') { if (fadeM.visible) fadeClear(); return; }
+    const now = performance.now(), why = !S.presenting ? 'left VR' : VEIL.on ? 'veil' : (A.tp && A.tp.state !== 'idle') ? 'beam' : now - F.t0 > 1500 ? 'timeout' : '';
+    if (why) { fadeClear(why); return; }
+    if (F.phase === 'out') { const k = Math.min(1, (now - F.t0) / F.out); F.a = k;
+      if (k >= 1) { const fn = F.fn; F.fn = null; try { if (fn) fn(); } catch (e) { S.lastError = 'fade ' + e; } F.phase = 'in'; F.t1 = performance.now(); } }
+    else { const k = Math.min(1, (now - F.t1) / F.inn); F.a = 1 - k;
+      if (k >= 1) { F.done++; const ms = Math.round(now - F.t0); if (F.kind === 'tp') CF.lastTpMs = ms; else CF.lastSnapMs = ms; fadeClear(); return; } }
+    F.maxA = Math.max(F.maxA, F.a); fadeM.material.opacity = F.a; fadeM.visible = F.a > 0.001; if (S.head) fadeM.position.set(S.head.x, S.head.y, S.head.z); }
+  // the arc: one ribbon (triangle strip) updated in place + its own landing ring; materials = the teleport ring's settings (no new program)
+  const arcPos = new Float32Array((ARC_N + 1) * 6), arcGeo = new THREE.BufferGeometry(); arcGeo.setAttribute('position', new THREE.BufferAttribute(arcPos, 3).setUsage(THREE.DynamicDrawUsage));
+  { const ix = []; for (let i = 0; i < ARC_N; i++) { const a = i * 2; ix.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } arcGeo.setIndex(ix); }
+  const arcMat = new THREE.MeshBasicMaterial({ color: 0x3ff3ff, fog: false, toneMapped: false, transparent: true, opacity: 0.85, side: THREE.DoubleSide });
+  const arcM = new THREE.Mesh(arcGeo, arcMat); arcM.name = 'vrTpArc'; arcM.frustumCulled = false; arcM.visible = false; arcM.renderOrder = 900; scene.add(arcM);
+  const arcRingMat = new THREE.MeshBasicMaterial({ color: 0x3ff3ff, fog: false, toneMapped: false, transparent: true, opacity: 0.9, side: THREE.DoubleSide });
+  const arcRing = new THREE.Mesh(new THREE.RingGeometry(0.24, 0.32, 40).rotateX(-Math.PI / 2), arcRingMat); arcRing.name = 'vrTpArcRing'; arcRing.visible = false; scene.add(arcRing);
+  function arcHide() { arcM.visible = false; arcRing.visible = false; }
+  const _ap = new THREE.Vector3(), _av = new THREE.Vector3(), _as = new THREE.Vector3(), _aq = new THREE.Vector3(), _apv = new THREE.Vector3();
+  function lineClear(ax, az, bx, bz, gy) { const d = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(d / 0.35));   // the path over the floor: no wall / cabinet in between
+    for (let i = 1; i < n; i++) { const t = i / n; _aq.set(ax + (bx - ax) * t, gy, az + (bz - az) * t); const x0 = _aq.x, z0 = _aq.z; A.collide(_aq); if (Math.hypot(_aq.x - x0, _aq.z - z0) > 0.3) return false; } return true; }
+  function arcUpdate() { const c = ctrlFor('left'); if (!c || !c.userData.src || !S.head) { CF.valid = false; arcHide(); return; }
+    c.updateMatrixWorld(true); _ap.setFromMatrixPosition(c.matrixWorld); c.getWorldQuaternion(_q); _av.set(0, 0, -1).applyQuaternion(_q).normalize();
+    const gy = monkey.position.y, V = 7.5, G = 9.81, dtS = 0.05; _as.set(-_av.z, 0, _av.x); if (_as.lengthSq() < 1e-6) _as.set(1, 0, 0); _as.normalize().multiplyScalar(0.012);
+    let landed = false, last = 0; _apv.copy(_ap);
+    for (let i = 0; i <= ARC_N; i++) { let x, y, z;
+      if (!landed) { const t = i * dtS; x = _ap.x + _av.x * V * t; y = _ap.y + _av.y * V * t - 0.5 * G * t * t; z = _ap.z + _av.z * V * t;
+        if (i > 0 && y <= gy) { const k = (_apv.y - gy) / Math.max(1e-6, _apv.y - y); x = _apv.x + (x - _apv.x) * k; z = _apv.z + (z - _apv.z) * k; y = gy; landed = true; CF.target.set(x, gy, z); }
+        _apv.set(x, y, z); last = i; } else { x = CF.target.x; y = gy; z = CF.target.z; }
+      arcPos.set([x - _as.x, y, z - _as.z, x + _as.x, y, z + _as.z], i * 6); }
+    arcGeo.attributes.position.needsUpdate = true; arcM.visible = true; CF.landed = landed;
+    let ok = landed, why = landed ? '' : 'no floor in range';
+    if (ok && Math.hypot(CF.target.x - S.head.x, CF.target.z - S.head.z) > TP_RANGE) { ok = false; why = 'too far'; }
+    if (ok) { _aq.set(CF.target.x, gy, CF.target.z); A.collide(_aq); if (Math.hypot(_aq.x - CF.target.x, _aq.z - CF.target.z) > 0.1) { ok = false; why = 'blocked'; } }
+    if (ok && !lineClear(S.head.x, S.head.z, CF.target.x, CF.target.z, gy)) { ok = false; why = 'wall / cabinet in the way'; }
+    CF.valid = ok; CF.why = why; const col = ok ? 0x3ff3ff : 0xff3040; arcMat.color.setHex(col); arcRingMat.color.setHex(col);
+    arcRing.visible = landed; if (landed) arcRing.position.set(CF.target.x, gy + 0.02, CF.target.z); }
+  function snapInput(R) { const ax = R ? R.x : 0; if (Math.abs(ax) < 0.35) CF.snapArmed = true;
+    if (!CF.snapArmed || Math.abs(ax) < 0.7 || CF.fade.phase !== 'idle') return;
+    CF.snapArmed = false; const a = -Math.sign(ax) * SNAP;
+    fadeStart('snap', 70, 90, () => { turnRig(a); applyRig(); S.rigDirty = false; CF.snaps++; S.snaps++; S.turnSum += SNAP; }); if (R.src) pulse(R.src, 0.25, 15); }
+  function tpInput(L) { const x = L ? L.x : 0, y = L ? L.y : 0, mag = Math.hypot(x, y);
+    if (UI.open || CF.fade.phase !== 'idle') { if (CF.aim) { CF.aim = false; arcHide(); } if (UI.open) return; }
+    if (CF.cancel) { if (mag < 0.25) CF.cancel = false; return; }
+    if (!CF.aim) { if (y < -0.6 && Math.abs(x) < 0.6 && CF.fade.phase === 'idle') { CF.aim = true; CF.valid = false; CF.aims++; } return; }
+    if (y > 0.35 || (Math.abs(x) > 0.75 && Math.abs(y) < 0.45)) { CF.aim = false; CF.cancel = true; CF.cancels++; arcHide(); return; }
+    if (mag < 0.25) { CF.aim = false; arcHide();
+      if (!CF.valid) { CF.badReleases++; return; }
+      const p = CF.target.clone(); fadeStart('tp', 120, 150, () => { if (tryTeleport(p)) { applyRig(); S.rigDirty = false; CF.tps++; } else CF.tpFails++; }); if (L && L.src) pulse(L.src, 0.3, 20); } }
+  S.comfort = () => ({ mode: cfOff() ? 'old' : CF.mode, aim: CF.aim, valid: CF.valid, landed: CF.landed, why: CF.why, target: CF.target.toArray(), arc: arcM.visible, ring: arcRing.visible, snapArmed: CF.snapArmed,
+    snaps: CF.snaps, tps: CF.tps, tpFails: CF.tpFails, badReleases: CF.badReleases, cancels: CF.cancels, aims: CF.aims, lastTpMs: CF.lastTpMs, lastSnapMs: CF.lastSnapMs,
+    fade: { a: CF.fade.a, phase: CF.fade.phase, kind: CF.fade.kind, starts: CF.fade.starts, done: CF.fade.done, forced: CF.fade.forced, lastForced: CF.fade.lastForced, maxA: CF.fade.maxA, visible: fadeM.visible } });
+  S.fadeTest = (ms = 400) => fadeStart('test', ms, 100, null);   // tests: a fade that a beam / timeout has to clear
   // ---------- per frame: before the arcade step (input -> movement) ----------
   function pre(dt, xf) {
     S.frames++; poll(); if (S.rigDirty) { applyRig(); S.rigDirty = false; }
+    fadeFrame();   // vrtest-v22: before the viewer pose is read, so a teleport / snap done at black is in this frame's S.head
     veilFrame(); if (VEIL.on) { st.vrMove = null; S.walkStart = null; S.turnRate = 0; return; }
     if (S.blurred) { st.vrMove = null; S.walkStart = null; S.turnRate = 0; S.blurFrames = (S.blurFrames || 0) + 1; return; }   // vrtest-v5: overlay up: no movement / game input
     unpinLights(); if (xf) warmCheck();
@@ -1329,12 +1429,17 @@ export function setupVR(A) {
     const nbOn = !!(A.nb && A.nb.playing);
     // t350u smooth turn: rate = 90 deg/s * ((|x| - 0.15) / 0.85)^2, nothing inside the deadzone, no snapping. Off while Neon Bricks takes the sticks.
     // vrtest-v14: the fire-type hologram owns the right stick while it is open (no turn / no teleport from that stick).
-    if (R && !nbOn && !FM.open) { const ax = Math.abs(R.x);
+    const comfortOn = !cfOff() && !nbOn && !nkIn();   // vrtest-v22: snap turn + teleport where the free walk applies
+    if (FM.open || !comfortOn) CF.snapArmed = false;
+    if (comfortOn && !FM.open) snapInput(R);
+    else if (R && !nbOn && !FM.open) { const ax = Math.abs(R.x);
       if (ax > TURN_DZ) { const k = Math.min(1, (ax - TURN_DZ) / (1 - TURN_DZ)), rate = -Math.sign(R.x) * TURN_MAX * k * k, a = rate * dt;
         turnRig(a); S.turnRate = rate; S.turnSum += Math.abs(a); S.turnTime += dt; S.turnMaxStep = Math.max(S.turnMaxStep, Math.abs(a)); } }
     st.yaw = S.head.yaw;
     if (nbOn) { const P = [L, R].reduce((b, q) => q && Math.hypot(q.x, q.y) > Math.hypot(b.x, b.y) ? q : b, { x: 0, y: 0 }); st.vrMove = { x: P.x, y: P.y, speed: SPEED }; }   // either stick moves the blocks
+    else if (comfortOn && CF.mode === 'teleport') { st.vrMove = null; tpInput(L); }
     else st.vrMove = L ? { x: L.x, y: L.y, speed: SPEED } : null;
+    if (!(comfortOn && CF.mode === 'teleport') && CF.aim) { CF.aim = false; arcHide(); }
     S.walkStart = { x: monkey.position.x, z: monkey.position.z };
   }
 
@@ -1356,6 +1461,8 @@ export function setupVR(A) {
     const nbOn = !!(nbApi() && nbApi().playing);
     const mode = play.mode, inGame = mode === 'game', L = IN.left, R = IN.right;
     dot.visible = false; tpRing.visible = false; S.hover = null;
+    if (CF.aim && S.presenting && mode === 'walk' && !(A.tp && A.tp.locked)) arcUpdate(); else if (arcM.visible || arcRing.visible) arcHide();   // vrtest-v22 teleport arc
+    if (fadeM.visible && S.head) fadeM.position.set(S.head.x, S.head.y, S.head.z);
     // rays
     let aimScreen = null;
     for (const c of ctrls) { const ray = c.userData.ray; if (!c.userData.src) { ray.visible = false; continue; } ray.visible = true; ray.scale.z = 3; ray.material.color.setHex(0x3ff3ff); }
@@ -1372,13 +1479,17 @@ export function setupVR(A) {
       if (n.zoomAmt) n.setZoomAmt(0);
     } else if (mode === 'walk') {
       if (nkRound()) {   // v23 (Dave t421u): Neon Knockout round: B or Y pauses / resumes (GRIP does nothing); the pause panel stays up until a choice
-        if (anyP('bDown')) { if (nkPaused()) nkResume(); else nkPause(); pulse((L && L.bDown ? L : R).src, 0.6, 40); }
+        if (L && L.bDown) { if (nkPaused()) nkResume(); else nkPause(); pulse(L.src, 0.6, 40); }   // vrtest-v23 (Dave t510u): Y only (B no longer pauses / opens a menu in NK)
+        else if (R && R.bDown) S.nkBIgnored = (S.nkBIgnored || 0) + 1;   // (test counter)
         else if (nkPaused() && UI.open !== 'nkPause') uiOpen('nkPause'); }
       else if (L && L.bDown && !(A.tp && A.tp.locked) && !nkPlaying()) { if (UI.open) uiClose(); else uiOpen('menu'); }   // v25 (Dave t442u): Y (left) = menu, always; B (right) = the laser pistol's FIRE (gear()), nothing without the gun
       else if (anyP('gripDown') && UI.open) { uiClose(); S.backs.menu++; pulse((L && L.gripDown ? L : R).src, 0.5, 30); }   // v12 (t382u): GRIP (short press) = back: closes any panel (menu, shop, accessories, tickets, chat, pack)
       UI.hover = null;
+      for (const c of ctrls) { const ry = c.userData.ray; if (ry && ry.userData.nkMz) { ry.position.set(0, 0, 0); ry.userData.nkMz = false; } }   // vrtest-v27: undo the NK muzzle sight offset each frame (re-applied below in a SHOOT round)
       const golfHand = !UI.open && !nkPlaying() ? golfVR(L, R) : null;   // v19: mini golf putting owns the pointing hand near a ball
-      if (nkPlaying()) { for (const c of ctrls) c.userData.ray.visible = false; }   // v16: boxing round: the controllers are gloves (no rays, no floor teleports)
+      if (nkPlaying()) { for (const c of ctrls) c.userData.ray.visible = false;
+        if (nkShootOn() && !FM.open) { const c = ctrlFor('right'); if (c && c.userData.src) { const ry = c.userData.ray; ry.visible = true; ry.scale.z = 6; ry.material.color.setHex(fireSpec().color);
+          const mz = window.__nkGame.blasterMuzzle(_le); if (mz) { c.updateMatrixWorld(true); ry.position.copy(c.worldToLocal(_le)); ry.userData.nkMz = true; } } } }   // vrtest-v27: the sight starts at the blaster's muzzle (parallel to the barrel)   // vrtest-v25: aiming sight   // v16: boxing round: the controllers are gloves (no rays, no floor teleports)
       else for (const [hand, P] of order) { const c = ctrlFor(hand); if (!c || !P) continue; if (golfHand === hand || golfHand === 'rolling' && P.trigDown) continue; const ray = rayOf(c);
         if (UI.open) { const u = uiHit(ray);
           if (u) { c.userData.ray.scale.z = u.t; c.userData.ray.material.color.setHex(0x7dff9a); dot.position.copy(u.p); dot.visible = true; if (u.btn && !UI.hover) UI.hover = u.btn.id;
@@ -1431,9 +1542,12 @@ export function setupVR(A) {
     if (play.lastToast && play.lastToast !== S._toast) { S._toast = play.lastToast; S.msg = play.lastToast; S.msgT = 2.5; }
     S.msgT = Math.max(0, S.msgT - dt);
     const hv = S.hover && S.hover.m, cost = hv ? (hv.cost || 1) : 0, TG = { ward: 'TRIGGER: ACCESSORIES', tickets: 'TRIGGER: BUY TICKETS', kiosk: 'TRIGGER: BUY TICKETS', beamShop: 'TRIGGER: SHOP', beamNK: 'TRIGGER: NEON KNOCKOUT', beamArcade: 'TRIGGER: BEAM TO ARCADE', shop: 'TRIGGER: PRIZE SHOP', nb: 'TRIGGER: PLAY NEON BRICKS', nbWindow: 'TRIGGER: PLAY NEON BRICKS', chatClerk: 'TRIGGER: CHAT WITH GROK', chatVisitor: 'TRIGGER: CHAT WITH GROK', chess: 'TRIGGER: PLAY CHESS WITH GROK', golfPay: 'TRIGGER: PAY 5 TICKETS · MINI GOLF', chessTable: 'TRIGGER: PLAY CHESS WITH GROK' };
+    // vrtest-v24: pointing at a Neon Knockout menu orb (target 'nkOrb_<id>') had no TG entry -> the wrist HUD read 'undefined'
+    const hoverLine = (t, TG) => { if (TG[t]) return TG[t]; if (/^nkOrb_/.test(t)) { const N = window.__nkGame, o = N && N.menuOrbs && N.menuOrbs.find(q => 'nkOrb_' + q.id === t);
+      return 'TRIGGER: ' + String(o ? o.label : t.slice(6)).replace(/^▶ /, '').toUpperCase(); } return 'TRIGGER: SELECT'; };
     const CTs = chessOn ? chessT() : null, chessLine = CTs ? (CTs.state === 'play' ? 'TRIGGER: MOVE A PIECE · GRIP: STAND UP' : CTs.state === 'stand' ? 'STANDING UP' : CTs.gstate === 'seated' || CTs.gstate === 'sitdown' ? 'GROK SITS DOWN · GRIP: STAND UP' : 'GROK IS COMING · A: SKIP · GRIP: STAND UP') : null;
     const GA = golfA(), golfLine = GA && GA.below && S.head ? (GA.rolling ? 'ROLLING…' : GA.aiming && GA.vr ? 'LET GO: PUTT · POWER ' + Math.round((GA.power || 0) * 100) + '% · GRIP: CANCEL' : GA.vrNear(S.head.x, S.head.z) ? 'POINT WHERE TO PUTT · HOLD TRIGGER TO AIM' : null) : null;
-    const line2 = S.msgT > 0 ? S.msg : chessLine ? chessLine : golfLine ? golfLine : nbOn ? 'STICK MOVE · A ROTATE · B DROP · HOLD GRIP LEAVE' : hv ? 'TRIGGER: PLAY ' + (NAMES[hv.key] || hv.key.toUpperCase()) + ' · ' + cost + (cost === 1 ? ' TICKET' : ' TICKETS') : S.hover && S.hover.target ? TG[S.hover.target] : inGame ? 'HOLD GRIP TO LEAVE' : UI.open ? 'TRIGGER: PRESS · GRIP: BACK' : 'TRIGGER: TELEPORT / PLAY · Y: MENU';
+    const line2 = S.msgT > 0 ? S.msg : chessLine ? chessLine : golfLine ? golfLine : nbOn ? 'STICK MOVE · A ROTATE · B DROP · HOLD GRIP LEAVE' : hv ? 'TRIGGER: PLAY ' + (NAMES[hv.key] || hv.key.toUpperCase()) + ' · ' + cost + (cost === 1 ? ' TICKET' : ' TICKETS') : S.hover && S.hover.target ? hoverLine(S.hover.target, TG) : inGame ? 'HOLD GRIP TO LEAVE' : UI.open ? 'TRIGGER: PRESS · GRIP: BACK' : 'TRIGGER: TELEPORT / PLAY · Y: MENU';
     const fly = st.fly, jb = jetOn() && fly ? { v: fly.e, low: fly.e <= 0.18 } : null; S.hudBar = jb ? Math.round(fly.e * 100) : null;   // t358u: main.js's real jetpack energy (st.fly.e, 0..1)
     if (!!jb !== !!hud.userData.bar) { hud.userData.bar = !!jb; hud.scale.set(1, jb ? 1.3 : 1, 1); }
     batteryInit(); const bat = BAT.supported && BAT.level != null ? { pct: Math.round(BAT.level * 100), charging: BAT.charging } : null;

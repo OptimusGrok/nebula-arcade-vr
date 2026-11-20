@@ -23,8 +23,8 @@ const { open } = require('./lib');
       crown: s.crown || null,
       propeller: s.propeller || null,
       viking: s.viking || null,
-      staleCaches: keys.filter(k => k.indexOf('nebula-arcade_vr-') === 0 && k !== 'nebula-arcade_vr-v29'),
-      hasV27: keys.includes('nebula-arcade_vr-v29'),
+      staleCaches: keys.filter(k => k.indexOf('nebula-arcade_vr-') === 0 && k !== 'nebula-arcade_vr-v30'),
+      hasV27: keys.includes('nebula-arcade_vr-v30'),
     };
   });
 
@@ -43,7 +43,7 @@ const { open } = require('./lib');
     const stale = new Response('window.__GA_ACC_BUILD="stale-v16";window.__gaPlayer={oldAcc:true,accBuild:"stale-v16",accessoryStats:function(){return {crown:{meshes:2,tris:12,mats:1}};}};', { headers: { 'content-type': 'text/javascript' } });
     const c = await caches.open('nebula-arcade_vr-v25');
     await c.put(new Request(new URL('player.js', location.href).href), stale.clone());
-    await c.put(new Request(new URL('player.js?v=27', location.href).href), stale.clone());
+    await c.put(new Request(new URL('player.js?v=30', location.href).href), stale.clone());
     await c.put(new Request('player.js'), stale);
   });
 

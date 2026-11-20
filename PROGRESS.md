@@ -65,3 +65,20 @@
   caches (normal game + other link caches untouched), unregisters itself and navigates open windows to the new link. Old repos: main 77cc3b6,
   test 35d607c. No "Monkey Mayhem VR" cabinet/listing in either VR repo, so no Primate Chaos change was needed.
 - Quest: remove the old Galactic Arcade app and add Nebula Arcade from the new link (saves/tickets/settings carry over, same origin).
+
+## VR v30: the test link (vrtest-v22..v27) on the main VR link (Dave t518u "Update the main with the test changes"; sw nebula-arcade_vr-v30)
+- From /workspace/nebula-arcade-vr-test 62987be (vrtest-v27). Copied: vr.js, nk/nkgame.js, nk/rooftop.js, opts.js (+ tests vr_comfort_v22,
+  nk_v23, nk_v24, nk_v25, nk_v27, updated nk_vr). index.html / sw.js / main.js / quest-pad.js / manifest stay main's (only version bumps).
+  - vrtest-v22: left-stick teleport (arc + fade), right-stick 30 deg snap turn (fade), MOVEMENT (TELEPORT / SMOOTH) in the Y menu + flat
+    OPTIONS (galacticarcade.vrMove), ?oldmove=1.
+  - vrtest-v23: Neon Knockout Y-only menu / pause (B does nothing), bigger SCENERY orb with fitted labels + SCENERY in the Y menu and pause
+    panel, white boxing ring removed (both sceneries), grey concrete rooftop floor, footprints centred.
+  - vrtest-v24: SCORE + CALORIES boards side by side on the player's left (43 / 68 deg, 2.1 m, +38 cm); wrist HUD 'undefined' fix.
+  - vrtest-v25 + v27: NK MODE PUNCH / SHOOT (orb, Y menu, pause, flat OPTIONS, galacticarcade.nkMode, ?noshootmode=1), no calories in SHOOT,
+    right stick click = fire-type hologram, blaster turned by the pointing ray so all 5 fire types + the aiming line leave the muzzle.
+- Kept OFF main: the vrtest-v21 DEBUG overlay (no debug.js, no script tag, no precache entry, no main.js frame hook, no opts.js button, no
+  vr.js wrist panel / Y-menu DEBUG button) and every TEST BUILD / VR MEMORY TEST label. Branding Nebula Arcade; localStorage keys and
+  Supabase names unchanged.
+- Version: ?v=30 on every tag, window.__GA_VR 'vr30', cache nebula-arcade_vr-v30.
+- Tests (480x270, one at a time under the lock, local main build): vr_comfort_v22, nk_v23, nk_v24, nk_v25, nk_v27, vr_fire_types,
+  vr_start_play (smoke), nk_vr, sw_reload, start: all pass, 0 FAIL.
